@@ -209,6 +209,12 @@ float g_TorsoPositionY = 0.0f;
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
 
+// variaveis que controlam a movimentacao da camera
+bool g_WKeyPressed = false;
+bool g_AKeyPressed = false;
+bool g_SKeyPressed = false;
+bool g_DKeyPressed = false;
+
 // Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
 
@@ -302,17 +308,42 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
-    ObjModel spheremodel("../../data/sphere.obj");
-    ComputeNormals(&spheremodel);
-    BuildTrianglesAndAddToVirtualScene(&spheremodel);
-
-    ObjModel bunnymodel("../../data/bunny.obj");
-    ComputeNormals(&bunnymodel);
-    BuildTrianglesAndAddToVirtualScene(&bunnymodel);
+    ObjModel characterModel("../../data/naruto/naruto.obj");
+    ComputeNormals(&characterModel);
+    BuildTrianglesAndAddToVirtualScene(&characterModel);
 
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
+
+    ObjModel sphereModel("../../data/sphere.obj");
+    ComputeNormals(&sphereModel);
+    BuildTrianglesAndAddToVirtualScene(&sphereModel);
+
+    ObjModel blockModel("../../data/block/block.obj");
+    ComputeNormals(&blockModel);
+    BuildTrianglesAndAddToVirtualScene(&blockModel);
+
+    ObjModel pizzaModel("../../data/pizza/pizza.obj");
+    ComputeNormals(&pizzaModel);
+    BuildTrianglesAndAddToVirtualScene(&pizzaModel);
+
+    ObjModel boxModel("../../data/box/box.obj");
+    ComputeNormals(&boxModel);
+    BuildTrianglesAndAddToVirtualScene(&boxModel);
+
+    ObjModel bridgeModel("../../data/bridge/bridge.obj");
+    ComputeNormals(&bridgeModel);
+    BuildTrianglesAndAddToVirtualScene(&bridgeModel);
+
+    ObjModel cowModel("../../data/cow/cow.obj");
+    ComputeNormals(&cowModel);
+    BuildTrianglesAndAddToVirtualScene(&cowModel);
+
+    ObjModel pipeModel("../../data/pipe/pipe.obj");
+    ComputeNormals(&pipeModel);
+    BuildTrianglesAndAddToVirtualScene(&pipeModel);
+
 
     if ( argc > 1 )
     {
@@ -330,6 +361,15 @@ int main(int argc, char* argv[])
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+    float r = g_CameraDistance;
+    float y = r*sin(g_CameraPhi);
+    float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
+    float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
+    glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f);
+
+    float prev_time = (float) glfwGetTime();
+    float speed = 0.3f;
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -356,17 +396,37 @@ int main(int argc, char* argv[])
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
         // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
         // e ScrollCallback().
-        float r = g_CameraDistance;
-        float y = r*sin(g_CameraPhi);
-        float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
-        float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
+        r = g_CameraDistance;
+        y = r*sin(g_CameraPhi);
+        z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
+        x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
-        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-        glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+        //glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+        //glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+        glm::vec4 camera_view_vector = -glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+        float curr_time = (float) glfwGetTime();
+		    float deltaT = curr_time - prev_time;
+	      prev_time = curr_time;
+
+    		if (g_WKeyPressed) {
+    			camera_position_c += (camera_view_vector * speed * deltaT);
+    		}
+
+    		if (g_AKeyPressed) {
+    			camera_position_c += (crossproduct(camera_up_vector, camera_view_vector) * speed * deltaT);
+    		}
+
+    		if (g_SKeyPressed) {
+    			camera_position_c += (-camera_view_vector * speed * deltaT);
+    		}
+
+    		if (g_DKeyPressed) {
+    			camera_position_c += (-crossproduct(camera_up_vector, camera_view_vector) * speed * deltaT);
+    		}
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -378,7 +438,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -50.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -409,32 +469,114 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
+        #define CHARACTER 0
+        #define PLANE  1
+        #define SPHERE  2
+        #define BLOCK 3
+        #define PIZZA 4
+        #define BOX 5
+        #define PIPE 6
+        #define COW 7
+        #define BRIDGE 8
 
-        // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f)
-              * Matrix_Rotate_Z(0.6f)
-              * Matrix_Rotate_X(0.2f)
-              * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
+        // Desenhamos o modelo do personagem principal
+        model = Matrix_Translate(0.0f,0.0f,0.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CHARACTER);
+        DrawVirtualObject("Object_Bottom_Teeth");
+        DrawVirtualObject("Object_Face");
+        DrawVirtualObject("Object_L_eye");
+        DrawVirtualObject("Object_Material0");
+        DrawVirtualObject("Object_Material10");
+        DrawVirtualObject("Object_Material13");
+        DrawVirtualObject("Object_Material2");
+        DrawVirtualObject("Object_Material2.001");
+        DrawVirtualObject("Object_Material3");
+        DrawVirtualObject("Object_Material4");
+        DrawVirtualObject("Object_Material5");
+        DrawVirtualObject("Object_Material6");
+        DrawVirtualObject("Object_Material8");
+        DrawVirtualObject("Object_Material9");
+        DrawVirtualObject("Object_Pupils");
+        DrawVirtualObject("Object_R_eye");
+        DrawVirtualObject("Object_Tongue");
+        DrawVirtualObject("Object_Top_Teeth");
+
+        // DESENHAMOS OS DEMAIS OBJECTOS DA CENA
+
+        // PLANO, vai funcionar como o "chao" do jogo
+        model = Matrix_Translate(0.0f,-1.24f,0.0f)
+              * Matrix_Scale(50.0f, 1.0f, 50.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE);
+        DrawVirtualObject("the_plane");
+
+        // ESFERA
+        model = Matrix_Translate(-3.0f,-0.6f,0.0f)
+              * Matrix_Scale(1.0f, 0.6f, 1.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
         DrawVirtualObject("the_sphere");
 
-        // Desenhamos o modelo do coelho
+        // BLOCK
+        model = Matrix_Translate(-5.6f, 0.2f,0.0f)
+              * Matrix_Scale(1.5f, 0.6f, 1.5f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BLOCK);
+        DrawVirtualObject("Object_TexMap_0");
+
+        // PIZZA
+        model = Matrix_Translate(-8.6f,2.0f,0.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PIZZA);
+        DrawVirtualObject("Object_Model001_Material001");
+
+        // BOX
+        model = Matrix_Translate(-8.6f,3.0f,-3.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BOX);
+        DrawVirtualObject("Object_FlatBedSmall.jpg");
+        DrawVirtualObject("Object_default-grey.jpg");
+
+        // PIPE
+        model = Matrix_Translate(-9.6f,4.0f,-10.0f)
+              * Matrix_Scale(3.0f, 2.0f, 3.5f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PIPE);
+        DrawVirtualObject("Object_color_0.247840-0.247840-0.247840.jpg");
+        DrawVirtualObject("Object_default-grey.jpg");
+
+        // COW
+        model = Matrix_Translate(-11.6f,5.0f,-12.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, COW);
+        DrawVirtualObject("Object_cow_00_0.jpg");
+        DrawVirtualObject("Object_default-grey.jpg");
+
+        // BRIDGE
+        model = Matrix_Translate(-15.6f,6.0f,-14.0f)
+              * Matrix_Scale(2.0f,1.3f,3.0f)
+              * Matrix_Rotate_Y(80.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BRIDGE);
+        DrawVirtualObject("Object_bridge_diffuse.jpg");
+        DrawVirtualObject("Object_default-grey.jpg");
+
+        // PLANO FINAL DO JOGO, QUANDO CHEGAR AQUI O JOGADOR VENCE
+        model = Matrix_Translate(-24.0f,7.0f,-14.0f)
+              * Matrix_Scale(5.0f, 1.0f, 5.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE);
+        DrawVirtualObject("the_plane");
+
+
+        /*// Desenhamos o modelo do coelho
         model = Matrix_Translate(1.0f,0.0f,0.0f)
               * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawVirtualObject("the_bunny");
-
-        // Desenhamos o plano do chão
-        model = Matrix_Translate(0.0f,-1.1f,0.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
-        DrawVirtualObject("the_plane");
-
+        */
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
         TextRendering_ShowEulerAngles(window);
@@ -1222,6 +1364,53 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fprintf(stdout,"Shaders recarregados!\n");
         fflush(stdout);
     }
+
+    // controle da posicao da camera
+    // A tecla 'W' deve movimentar a câmera para FRENTE (em relação ao sistema de coordenadas da câmera);
+    // A tecla 'S' deve movimentar a câmera para TRÁS (em relação ao sistema de coordenadas da câmera);
+    // A tecla 'D' deve movimentar a câmera para DIREITA (em relação ao sistema de coordenadas da câmera);
+    // A tecla 'A' deve movimentar a câmera para ESQUERDA (em relação ao sistema de coordenadas da câmera);
+
+    if (key == GLFW_KEY_W && action == GLFW_PRESS)
+      {
+          g_WKeyPressed = true;
+      }
+
+    if (key == GLFW_KEY_A && action == GLFW_PRESS)
+      {
+          g_AKeyPressed = true;
+      }
+
+    if (key == GLFW_KEY_S && action == GLFW_PRESS)
+      {
+          g_SKeyPressed = true;
+      }
+
+    if (key == GLFW_KEY_D && action == GLFW_PRESS)
+      {
+          g_DKeyPressed = true;
+      }
+
+    // "desliga" quando soltar a tecla
+    if (key == GLFW_KEY_W && action == GLFW_RELEASE)
+      {
+          g_WKeyPressed = false;
+      }
+
+    if (key == GLFW_KEY_A && action == GLFW_RELEASE)
+      {
+          g_AKeyPressed = false;
+      }
+
+    if (key == GLFW_KEY_S && action == GLFW_RELEASE)
+      {
+          g_SKeyPressed = false;
+      }
+
+    if (key == GLFW_KEY_D && action == GLFW_RELEASE)
+      {
+          g_DKeyPressed = false;
+      }
 }
 
 // Definimos o callback para impressão de erros da GLFW no terminal
