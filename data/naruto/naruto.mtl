@@ -77,7 +77,7 @@ Ks 0.000000 0.000000 0.000000
 d 1.000000
 illum 2
 Ns 9.84916
-map_Kd main.png
+map_Kd ntxr001.png
 
 newmtl Material4
 Ka 0.000000 0.000000 0.000000

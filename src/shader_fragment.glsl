@@ -13,16 +13,28 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
+in vec3 Ka;
+in vec3 Kd;
+in vec3 Ks;
+flat in int textureId;
+
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
-#define SPHERE 0
-#define BUNNY  1
-#define PLANE  2
+
 uniform int object_id;
+#define CHARACTER_ID 0
+#define PLANE_ID 1
+#define SPHERE_ID 2
+#define BLOCK_ID 3
+#define PIZZA_ID 4
+#define BOX_ID 5
+#define PIPE_ID 6
+#define COW_ID 7
+#define BRIDGE_ID 8
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
 uniform vec4 bbox_min;
@@ -32,6 +44,24 @@ uniform vec4 bbox_max;
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
+uniform sampler2D TextureImage3;
+uniform sampler2D TextureImage4;
+uniform sampler2D TextureImage5;
+uniform sampler2D TextureImage6;
+uniform sampler2D TextureImage7;
+uniform sampler2D TextureImage8;
+uniform sampler2D TextureImage9;
+// TID = TEXTURE_ID
+#define GRAY_COLOR_TID 0
+#define NARUTO_TEXTURE_1_TID 1
+#define NARUTO_TEXTURE_2_TID 2
+#define NARUTO_TEXTURE_PUPILE_TID 3
+#define BOX_TID 4
+#define BRICK_TID 5
+#define BRIDGE_TID 6
+#define COW_TID 7
+#define PIPE_TID 8
+#define PIZZA_TID 9
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -47,6 +77,10 @@ void main()
     vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
     vec4 camera_position = inverse(view) * origin;
 
+    vec3 this_ka = Ka;
+    vec3 this_kd = Kd;
+    vec3 this_ks = Ks;
+
     // O fragmento atual é coberto por um ponto que percente à superfície de um
     // dos objetos virtuais da cena. Este ponto, p, possui uma posição no
     // sistema de coordenadas global (World coordinates). Esta posição é obtida
@@ -59,20 +93,58 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
+    vec4 l = normalize(vec4(1.0,1.0,0.5,0.0));
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
+    // Vetor que define o sentido da reflexão especular ideal.
+    vec4 r = normalize(-l + 2*dot(n,l)*n);
+
+    // Parâmetros que definem as propriedades espectrais da superfície
+    float q; // Expoente especular para o modelo de iluminação de Phong
+
+    if ( object_id == SPHERE_ID )
+    {
+        this_kd = vec3(0.8,0.4,0.08);
+        this_ks = vec3(0.01,0.01,0.01);
+        this_ka = vec3(0.4,0.2,0.04);
+        q = 1.0;
+    }
+    else if ( object_id == PLANE_ID )
+    {
+        this_kd = vec3(0.2,0.7,0.2);
+        this_ks = vec3(0.01,0.01,0.01);
+        this_ka = vec3(0.0,0.0,0.0);
+        q = 20.0;
+    }
+    else // Objeto desconhecido = preto
+    {
+        q = 5.0;
+    }
+
+    // Espectro da fonte de iluminação
+    vec3 I = vec3(1.0,1.0,1.0); // PREENCH AQUI o espectro da fonte de luz
+
+    // Espectro da luz ambiente
+    vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
+
+    // Termo difuso utilizando a lei dos cossenos de Lambert
+    vec3 lambert_diffuse_term = this_kd*I*max(0,dot(n,l)); // PREENCHA AQUI o termo difuso de Lambert
+
+    // Termo ambiente
+    vec3 ambient_term = this_ka*Ia; // PREENCHA AQUI o termo ambiente
+
+    // Termo especular utilizando o modelo de iluminação de Phong
+    vec3 phong_specular_term  = this_ks*I*pow(max(0,dot(r,v)),q); // PREENCH AQUI o termo especular de Phong
+
     // Coordenadas de textura U e V
     float U = 0.0;
     float V = 0.0;
-    float U1 = 0.0;
-    float V1 = 0.0;
 
     float radius = 1.0f;
 
-    if ( object_id == SPHERE )
+    if ( object_id == SPHERE_ID )
     {
         // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
         // projeção esférica EM COORDENADAS DO MODELO. Utilize como referência
@@ -98,10 +170,8 @@ void main()
 
         U = (theta + M_PI)/(2*M_PI);
         V = (phi + M_PI_2)/(M_PI);
-        U1 = (theta + M_PI)/(2*M_PI);
-        V1 = (phi + M_PI_2)/(M_PI);
     }
-    else if ( object_id == BUNNY )
+    else if ( object_id == 100 ) // BUNNY
     {
         // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
         // projeção planar XY em COORDENADAS DO MODELO. Utilize como referência
@@ -123,26 +193,40 @@ void main()
 
         U = (position_model.x - minx)/(maxx - minx);
         V = (position_model.y - miny)/(maxy - miny);
-        U1 = (position_model.x - minx)/(maxx - minx);
-        V1 = (position_model.y - miny)/(maxy - miny);
     }
-    else if ( object_id == PLANE )
+    else
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
         U = texcoords.x;
         V = texcoords.y;
-        U1 = texcoords.x;
-        V1 = texcoords.y;
     }
 
     // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
     vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
-    vec3 Kd1 = texture(TextureImage1, vec2(U1,V1)).rgb;
 
+    if(textureId == NARUTO_TEXTURE_1_TID) {
+        Kd0 = texture(TextureImage1, vec2(texcoords.x,texcoords.y)).rgb;
+    } else if(textureId == NARUTO_TEXTURE_2_TID) {
+        Kd0 = texture(TextureImage2, vec2(texcoords.x,texcoords.y)).rgb;
+    } else if(textureId == NARUTO_TEXTURE_PUPILE_TID) {
+        Kd0 = texture(TextureImage3, vec2(texcoords.x,texcoords.y)).rgb;
+    } else if(textureId == BOX_TID) {
+        Kd0 = texture(TextureImage4, vec2(texcoords.x,texcoords.y)).rgb;
+    } else if(textureId == BRICK_TID) {
+        Kd0 = texture(TextureImage5, vec2(texcoords.x,texcoords.y)).rgb;
+    } else if(textureId == BRIDGE_TID){
+        Kd0 = texture(TextureImage6, vec2(texcoords.x,texcoords.y)).rgb;
+    } else if(textureId == COW_TID){
+        Kd0 = texture(TextureImage7, vec2(texcoords.x,texcoords.y)).rgb;
+    } else if(textureId == PIPE_TID){
+        Kd0 = texture(TextureImage8, vec2(texcoords.x,texcoords.y)).rgb;
+    } else if(textureId == PIZZA_TID){
+        Kd0 = texture(TextureImage9, vec2(texcoords.x,texcoords.y)).rgb;
+    }
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
 
-    color.rgb = Kd0 * (lambert + 0.01) + Kd1 * floor(1-lambert);
+    color.rgb = Kd0 * (lambert_diffuse_term + 0.01) + ambient_term + phong_specular_term;
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:

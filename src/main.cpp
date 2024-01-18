@@ -310,8 +310,16 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
-    LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
+    LoadTextureImage("../../data/naruto/default-grey.jpg");      // TextureImage0
+    LoadTextureImage("../../data/naruto/ntxr000.png");      // TextureImage1
+    LoadTextureImage("../../data/naruto/ntxr001.png");      // TextureImage2
+    LoadTextureImage("../../data/naruto/ntxr006.png");      // TextureImage3
+    LoadTextureImage("../../data/box/FlatBedSmall.jpg");      // TextureImage4
+    LoadTextureImage("../../data/block/texture.jpg");      // TextureImage5
+    LoadTextureImage("../../data/bridge/bridge_diffuse.jpg");      // TextureImage6
+    LoadTextureImage("../../data/cow/cow_00_0.jpg");      // TextureImage7
+    LoadTextureImage("../../data/pipe/color_0.247840-0.247840-0.247840.jpg");      // TextureImage8
+    LoadTextureImage("../../data/pizza/TX_Food_PizzaBox01_D.png");      // TextureImage9
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel characterModel("../../data/naruto/naruto.obj");
@@ -653,12 +661,12 @@ void LoadTextureImage(const char* filename)
     glGenSamplers(1, &sampler_id);
 
     // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     // Parâmetros de amostragem da textura.
     glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_REPEAT);
 
     // Agora enviamos a imagem lida do disco para a GPU
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -759,6 +767,13 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage4"), 4);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage5"), 5);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage6"), 6);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage7"), 7);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
     glUseProgram(0);
 }
 
@@ -845,6 +860,47 @@ void ComputeNormals(ObjModel* model)
     }
 }
 
+// Funcao que mapeia os nomes dos arquivos textura para numeros inteiros
+int mapTextureNameIndex(std::string textureName) {
+    if(!textureName.compare("ntxr000.png")) { // NARUTO
+        return 1;
+    }
+
+    if(!textureName.compare("ntxr001.png")) { // NARUTO
+        return 2;
+    }
+
+    if(!textureName.compare("ntxr006.png")) { // NARUTO
+        return 3;
+    }
+
+    if(!textureName.compare("FlatBedSmall.jpg")) { // BOX
+        return 4;
+    }
+
+    if(!textureName.compare("texture.jpg")) { // BRICK
+        return 5;
+    }
+
+    if(!textureName.compare("bridge_diffuse.jpg")) { // BRIDGE
+        return 6;
+    }
+
+    if(!textureName.compare("cow_00_0.jpg")) { // COW
+        return 7;
+    }
+
+    if(!textureName.compare("color_0.247840-0.247840-0.247840.jpg")) {  // PIPE
+        return 8;
+    }
+
+    if(!textureName.compare("TX_Food_PizzaBox01_D.png")) {  // PIZZA
+        return 9;
+    }
+
+    return 0;
+}
+
 // Constrói triângulos para futura renderização a partir de um ObjModel.
 void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
 {
@@ -856,6 +912,10 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
     std::vector<float>  model_coefficients;
     std::vector<float>  normal_coefficients;
     std::vector<float>  texture_coefficients;
+    std::vector<float>  material_Ka;
+    std::vector<float>  material_Kd;
+    std::vector<float>  material_Ks;
+    std::vector<int>  texture_Id;
 
     for (size_t shape = 0; shape < model->shapes.size(); ++shape)
     {
@@ -894,6 +954,19 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
                 bbox_max.y = std::max(bbox_max.y, vy);
                 bbox_max.z = std::max(bbox_max.z, vz);
 
+                if(model->materials.size() > 0) {
+                    material_Ka.push_back(model->materials[shape].ambient[0]);
+                    material_Ka.push_back(model->materials[shape].ambient[1]);
+                    material_Ka.push_back(model->materials[shape].ambient[2]);
+                    material_Kd.push_back(model->materials[shape].diffuse[0]);
+                    material_Kd.push_back(model->materials[shape].diffuse[1]);
+                    material_Kd.push_back(model->materials[shape].diffuse[2]);
+                    material_Ks.push_back(model->materials[shape].specular[0]);
+                    material_Ks.push_back(model->materials[shape].specular[1]);
+                    material_Ks.push_back(model->materials[shape].specular[2]);
+                    texture_Id.push_back(mapTextureNameIndex(model->materials[shape].diffuse_texname.c_str()));
+                }
+
                 // Inspecionando o código da tinyobjloader, o aluno Bernardo
                 // Sulzbach (2017/1) apontou que a maneira correta de testar se
                 // existem normais e coordenadas de textura no ObjModel é
@@ -913,7 +986,9 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
                 if ( idx.texcoord_index != -1 )
                 {
                     const float u = model->attrib.texcoords[2*idx.texcoord_index + 0];
+                    //printf("u: %f  ", u);
                     const float v = model->attrib.texcoords[2*idx.texcoord_index + 1];
+                    //printf("v: %f\n", v);
                     texture_coefficients.push_back( u );
                     texture_coefficients.push_back( v );
                 }
@@ -970,6 +1045,62 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
         location = 2; // "(location = 1)" em "shader_vertex.glsl"
         number_of_dimensions = 2; // vec2 em "shader_vertex.glsl"
         glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(location);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    if ( !material_Ka.empty() )
+    {
+        GLuint VBO_material_Ka_id;
+        glGenBuffers(1, &VBO_material_Ka_id);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_material_Ka_id);
+        glBufferData(GL_ARRAY_BUFFER, material_Ka.size() * sizeof(float), NULL, GL_STATIC_DRAW);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, material_Ka.size() * sizeof(float), material_Ka.data());
+        location = 3; // "(location = 1)" em "shader_vertex.glsl"
+        number_of_dimensions = 3; // vec3 em "shader_vertex.glsl"
+        glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(location);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    if ( !material_Kd.empty() )
+    {
+        GLuint VBO_material_Kd_id;
+        glGenBuffers(1, &VBO_material_Kd_id);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_material_Kd_id);
+        glBufferData(GL_ARRAY_BUFFER, material_Kd.size() * sizeof(float), NULL, GL_STATIC_DRAW);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, material_Kd.size() * sizeof(float), material_Kd.data());
+        location = 4; // "(location = 1)" em "shader_vertex.glsl"
+        number_of_dimensions = 3; // vec3 em "shader_vertex.glsl"
+        glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(location);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    if ( !material_Ks.empty() )
+    {
+        GLuint VBO_material_Ks_id;
+        glGenBuffers(1, &VBO_material_Ks_id);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_material_Ks_id);
+        glBufferData(GL_ARRAY_BUFFER, material_Ks.size() * sizeof(float), NULL, GL_STATIC_DRAW);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, material_Ks.size() * sizeof(float), material_Ks.data());
+        location = 5; // "(location = 1)" em "shader_vertex.glsl"
+        number_of_dimensions = 3; // vec3 em "shader_vertex.glsl"
+        glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(location);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    if ( !texture_Id.empty() )
+    {
+        GLuint VBO_texture_Id_id;
+        glGenBuffers(1, &VBO_texture_Id_id);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_texture_Id_id);
+        glBufferData(GL_ARRAY_BUFFER, texture_Id.size() * sizeof(int), NULL, GL_STATIC_DRAW);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, texture_Id.size() * sizeof(int), texture_Id.data());
+        location = 6; // "(location = 1)" em "shader_vertex.glsl"
+        number_of_dimensions = 1; // vec3 em "shader_vertex.glsl"
+        glVertexAttribIPointer(location, number_of_dimensions, GL_INT, 0, 0);
         glEnableVertexAttribArray(location);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
@@ -1589,25 +1720,25 @@ void PrintObjModelInfo(ObjModel* model)
   printf("# of shapes    : %d\n", (int)shapes.size());
   printf("# of materials : %d\n", (int)materials.size());
 
-  for (size_t v = 0; v < attrib.vertices.size() / 3; v++) {
-    printf("  v[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
-           static_cast<const double>(attrib.vertices[3 * v + 0]),
-           static_cast<const double>(attrib.vertices[3 * v + 1]),
-           static_cast<const double>(attrib.vertices[3 * v + 2]));
-  }
+  //for (size_t v = 0; v < attrib.vertices.size() / 3; v++) {
+  //  printf("  v[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
+  //         static_cast<const double>(attrib.vertices[3 * v + 0]),
+  //         static_cast<const double>(attrib.vertices[3 * v + 1]),
+  //         static_cast<const double>(attrib.vertices[3 * v + 2]));
+  //}
 
-  for (size_t v = 0; v < attrib.normals.size() / 3; v++) {
-    printf("  n[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
-           static_cast<const double>(attrib.normals[3 * v + 0]),
-           static_cast<const double>(attrib.normals[3 * v + 1]),
-           static_cast<const double>(attrib.normals[3 * v + 2]));
-  }
+  //for (size_t v = 0; v < attrib.normals.size() / 3; v++) {
+  //    printf("  n[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
+  //         static_cast<const double>(attrib.normals[3 * v + 0]),
+  //         static_cast<const double>(attrib.normals[3 * v + 1]),
+  //         static_cast<const double>(attrib.normals[3 * v + 2]));
+  //}
 
-  for (size_t v = 0; v < attrib.texcoords.size() / 2; v++) {
-    printf("  uv[%ld] = (%f, %f)\n", static_cast<long>(v),
-           static_cast<const double>(attrib.texcoords[2 * v + 0]),
-           static_cast<const double>(attrib.texcoords[2 * v + 1]));
-  }
+  //for (size_t v = 0; v < attrib.texcoords.size() / 2; v++) {
+  //  printf("  uv[%ld] = (%f, %f)\n", static_cast<long>(v),
+  //         static_cast<const double>(attrib.texcoords[2 * v + 0]),
+  //         static_cast<const double>(attrib.texcoords[2 * v + 1]));
+  //}
 
   // For each shape
   for (size_t i = 0; i < shapes.size(); i++) {
