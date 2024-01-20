@@ -212,10 +212,16 @@ bool g_UsePerspectiveProjection = true;
 bool g_UseFreeCamera = true;
 
 // variaveis que controlam a movimentacao da camera
+bool g_UpKeyPressed = false;
+bool g_LeftKeyPressed = false;
+bool g_DownKeyPressed = false;
+bool g_RightKeyPressed = false;
+// variaveis que controlam a movimentacao o personagem
 bool g_WKeyPressed = false;
 bool g_AKeyPressed = false;
 bool g_SKeyPressed = false;
 bool g_DKeyPressed = false;
+
 
 // Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
@@ -385,7 +391,8 @@ int main(int argc, char* argv[])
     glm::vec4 camera_lookat_l = glm::vec4(narutoX, narutoY, narutoZ, 1.0f); ;
 
     float prev_time = (float) glfwGetTime();
-    float speed = 0.5f;
+    float prev_time_naruto = (float) glfwGetTime();
+    float speed = 1.0f;
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -432,19 +439,19 @@ int main(int argc, char* argv[])
   		    float deltaT = curr_time - prev_time;
   	      prev_time = curr_time;
 
-      		if (g_WKeyPressed) {
+      		if (g_UpKeyPressed) {
       			camera_position_c += (camera_view_vector * speed * deltaT);
       		}
 
-      		if (g_AKeyPressed) {
+      		if (g_LeftKeyPressed) {
       			camera_position_c += (crossproduct(camera_up_vector, camera_view_vector) * speed * deltaT);
       		}
 
-      		if (g_SKeyPressed) {
+      		if (g_DownKeyPressed) {
       			camera_position_c += (-camera_view_vector * speed * deltaT);
       		}
 
-      		if (g_DKeyPressed) {
+      		if (g_RightKeyPressed) {
       			camera_position_c += (-crossproduct(camera_up_vector, camera_view_vector) * speed * deltaT);
       		}
         } else {
@@ -504,6 +511,7 @@ int main(int argc, char* argv[])
         #define COW 7
         #define BRIDGE 8
 
+        // movimentacao do naturo
         // Desenhamos o modelo do personagem principal
         model = Matrix_Translate(narutoX, narutoY, narutoZ);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -1515,50 +1523,50 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     }
 
     // controle da posicao da camera
-    // A tecla 'W' deve movimentar a câmera para FRENTE (em relação ao sistema de coordenadas da câmera);
-    // A tecla 'S' deve movimentar a câmera para TRÁS (em relação ao sistema de coordenadas da câmera);
-    // A tecla 'D' deve movimentar a câmera para DIREITA (em relação ao sistema de coordenadas da câmera);
-    // A tecla 'A' deve movimentar a câmera para ESQUERDA (em relação ao sistema de coordenadas da câmera);
+    // A tecla 'arrow up' deve movimentar a câmera para FRENTE (em relação ao sistema de coordenadas da câmera);
+    // A tecla 'arrow down' deve movimentar a câmera para TRÁS (em relação ao sistema de coordenadas da câmera);
+    // A tecla 'arrow right' deve movimentar a câmera para DIREITA (em relação ao sistema de coordenadas da câmera);
+    // A tecla 'arrow left' deve movimentar a câmera para ESQUERDA (em relação ao sistema de coordenadas da câmera);
 
-    if (key == GLFW_KEY_W && action == GLFW_PRESS)
+    if (key == GLFW_KEY_UP && action == GLFW_PRESS)
       {
-          g_WKeyPressed = true;
+          g_UpKeyPressed = true;
       }
 
-    if (key == GLFW_KEY_A && action == GLFW_PRESS)
+    if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
       {
-          g_AKeyPressed = true;
+          g_LeftKeyPressed = true;
       }
 
-    if (key == GLFW_KEY_S && action == GLFW_PRESS)
+    if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
       {
-          g_SKeyPressed = true;
+          g_DownKeyPressed = true;
       }
 
-    if (key == GLFW_KEY_D && action == GLFW_PRESS)
+    if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
       {
-          g_DKeyPressed = true;
+          g_RightKeyPressed = true;
       }
 
     // "desliga" quando soltar a tecla
-    if (key == GLFW_KEY_W && action == GLFW_RELEASE)
+    if (key == GLFW_KEY_UP && action == GLFW_RELEASE)
       {
-          g_WKeyPressed = false;
+          g_UpKeyPressed = false;
       }
 
-    if (key == GLFW_KEY_A && action == GLFW_RELEASE)
+    if (key == GLFW_KEY_LEFT && action == GLFW_RELEASE)
       {
-          g_AKeyPressed = false;
+          g_LeftKeyPressed = false;
       }
 
-    if (key == GLFW_KEY_S && action == GLFW_RELEASE)
+    if (key == GLFW_KEY_DOWN && action == GLFW_RELEASE)
       {
-          g_SKeyPressed = false;
+          g_DownKeyPressed = false;
       }
 
-    if (key == GLFW_KEY_D && action == GLFW_RELEASE)
+    if (key == GLFW_KEY_RIGHT && action == GLFW_RELEASE)
       {
-          g_DKeyPressed = false;
+          g_RightKeyPressed = false;
       }
 
     if (key == GLFW_KEY_L && action == GLFW_PRESS)
@@ -1571,6 +1579,54 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
           g_UseFreeCamera = true;
       }
 
+    // controla a movimentação
+    if (key == GLFW_KEY_W)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_WKeyPressed = true;
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            g_WKeyPressed = false;
+        }
+    }
+
+    if (key == GLFW_KEY_A)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_AKeyPressed = true;
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            g_AKeyPressed = false;
+        }
+    }
+
+    if (key == GLFW_KEY_S)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_SKeyPressed = true;
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            g_SKeyPressed = false;
+        }
+    }
+
+    if (key == GLFW_KEY_D)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_DKeyPressed = true;
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            g_DKeyPressed = false;
+        }
+    }
 }
 
 // Definimos o callback para impressão de erros da GLFW no terminal
