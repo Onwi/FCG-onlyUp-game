@@ -5,6 +5,10 @@
 layout (location = 0) in vec4 model_coefficients;
 layout (location = 1) in vec4 normal_coefficients;
 layout (location = 2) in vec2 texture_coefficients;
+layout (location = 3) in vec3 material_Ka;
+layout (location = 4) in vec3 material_Kd;
+layout (location = 5) in vec3 material_Ks;
+layout (location = 6) in int texture_Id;
 
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
@@ -19,6 +23,10 @@ out vec4 position_world;
 out vec4 position_model;
 out vec4 normal;
 out vec2 texcoords;
+out vec3 Ka;
+out vec3 Kd;
+out vec3 Ks;
+flat out int textureId;
 
 void main()
 {
@@ -63,5 +71,9 @@ void main()
 
     // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
     texcoords = texture_coefficients;
+    Ka = material_Ka;
+    Kd = material_Kd;
+    Ks = material_Ks;
+    textureId = texture_Id;
 }
 
