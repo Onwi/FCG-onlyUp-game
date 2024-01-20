@@ -436,7 +436,7 @@ int main(int argc, char* argv[])
           camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
           float curr_time = (float) glfwGetTime();
-  		    float deltaT = curr_time - prev_time;
+  		  float deltaT = curr_time - prev_time;
   	      prev_time = curr_time;
 
       		if (g_UpKeyPressed) {
@@ -512,6 +512,27 @@ int main(int argc, char* argv[])
         #define BRIDGE 8
 
         // movimentacao do naturo
+
+        // PARA A FRENTE
+        if (g_WKeyPressed) {
+            float timeNow = (float) glfwGetTime();
+  		    float deltaN = timeNow - prev_time_naruto;
+            narutoX += -0.2f * deltaN * 0.02;
+        }
+
+        // PARA A TRAS
+        if (g_SKeyPressed) {
+            float timeNow = (float) glfwGetTime();
+  		    float deltaN = timeNow - prev_time_naruto;
+            narutoX += 0.2f * deltaN * 0.02;
+        }
+        // MOVIMENTOS DIRETAMENTE PARA A ESQUERDA E DIREITA NAO FAZEM SENTIDO, CERTO?
+        // LOGO, PRECISAMOS DESCOBRI UM MEIO DE MOVIMENTAR O PERSONAGEM NAS DIAGONAIS
+        // OU SEJA, QUANDO QUEREMOS PULAR PARA UM OBSTACULO A ESQUERDA, APERTAMOS 'W' PARA IR PARA A FRENTE
+        // E 'A' PARA IR PARA A ESQUERDA AO MESMO TEMPO
+        //
+        // ALEM DISSO, PRECISAMOS DE UM MEIO DE O PERSONAGEM GIRAR NO SEU PROPIO EIXO PARA MUDAR DE DIREÇÃO
+
         // Desenhamos o modelo do personagem principal
         model = Matrix_Translate(narutoX, narutoY, narutoZ);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
