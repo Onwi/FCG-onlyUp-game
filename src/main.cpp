@@ -320,6 +320,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/cow/cow_00_0.jpg");      // TextureImage7
     LoadTextureImage("../../data/pipe/color_0.247840-0.247840-0.247840.jpg");      // TextureImage8
     LoadTextureImage("../../data/pizza/TX_Food_PizzaBox01_D.png");      // TextureImage9
+    LoadTextureImage("../../data/chao.jpg");      // TextureImage10
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel characterModel("../../data/naruto/naruto.obj");
@@ -774,6 +775,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage7"), 7);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
     glUseProgram(0);
 }
 

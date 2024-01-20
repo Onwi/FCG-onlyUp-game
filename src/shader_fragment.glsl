@@ -51,6 +51,8 @@ uniform sampler2D TextureImage6;
 uniform sampler2D TextureImage7;
 uniform sampler2D TextureImage8;
 uniform sampler2D TextureImage9;
+uniform sampler2D TextureImage10;
+
 // TID = TEXTURE_ID
 #define GRAY_COLOR_TID 0
 #define NARUTO_TEXTURE_1_TID 1
@@ -193,6 +195,31 @@ void main()
 
         U = (position_model.x - minx)/(maxx - minx);
         V = (position_model.y - miny)/(maxy - miny);
+    }
+    else if ( object_id == PLANE_ID) {
+        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
+        float minx = bbox_min.x;
+        float maxx = bbox_max.x;
+
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
+
+        float minz = bbox_min.z;
+        float maxz = bbox_max.z;
+
+        float px = (position_model.x - minx) / (maxx - minx);
+        float pz = (position_model.z - minz) / (maxz - minz);
+
+        U = px;
+        V = pz;
+
+        vec3 Kd0 = texture(TextureImage10, vec2(U,V)).rgb;
+        float lambert = max(0,dot(n,l));
+        color.rgb = Kd0 * (lambert + 0.01);
+        color.a = 1;
+        color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
+
+        return;
     }
     else
     {
