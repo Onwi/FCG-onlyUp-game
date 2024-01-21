@@ -152,6 +152,10 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
+int mapTextureNameIndex(std::string textureName);
+glm::vec4 CubicBezier(glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, glm::vec4 p4, unsigned int time, unsigned int start_time, double step);
+glm::vec4 StartAnimation(unsigned int *frame_counter, bool *start_animation_active);
+
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
 struct SceneObject
@@ -394,9 +398,17 @@ int main(int argc, char* argv[])
     float prev_time_naruto = (float) glfwGetTime();
     float speed = 1.0f;
 
+    glm::vec4 result = glm::vec4(0.0,0.0,0.0,1.0);
+
+    unsigned int frame_counter = 0; // for the bezier curve
+
+    bool start_animation_active = true;
+
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
+        result = StartAnimation(&frame_counter, &start_animation_active);
+        printf("%f, %f, %f, %d, %d\n", result.x, result.y, result.z, frame_counter, start_animation_active);
         // Aqui executamos as operações de renderização
 
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
@@ -429,36 +441,38 @@ int main(int argc, char* argv[])
         //glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f);
         //glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f);
         glm::vec4 camera_view_vector;// = -glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
-        glm::vec4 camera_up_vector;//   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+        glm::vec4 camera_up_vector = glm::vec4(0.0f,1.0f,0.0f,0.0f);;//   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
         if(g_UseFreeCamera) {
-          camera_view_vector = -glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
-          camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+            if(start_animation_active) {
+                camera_position_c = result;
+                camera_view_vector = -glm::vec4(1.0,1.0,1.0,0.0f); // Vetor "view", sentido para onde a câmera está virada
+            } else {
+                camera_view_vector = -glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
 
-          float curr_time = (float) glfwGetTime();
-  		  float deltaT = curr_time - prev_time;
-  	      prev_time = curr_time;
+                float curr_time = (float) glfwGetTime();
+                float deltaT = curr_time - prev_time;
+                prev_time = curr_time;
+                if (g_UpKeyPressed) {
+                    camera_position_c += (camera_view_vector * speed * deltaT);
+                }
 
-      		if (g_UpKeyPressed) {
-      			camera_position_c += (camera_view_vector * speed * deltaT);
-      		}
+                if (g_LeftKeyPressed) {
+                    camera_position_c += (crossproduct(camera_up_vector, camera_view_vector) * speed * deltaT);
+                }
 
-      		if (g_LeftKeyPressed) {
-      			camera_position_c += (crossproduct(camera_up_vector, camera_view_vector) * speed * deltaT);
-      		}
+                if (g_DownKeyPressed) {
+                    camera_position_c += (-camera_view_vector * speed * deltaT);
+                }
 
-      		if (g_DownKeyPressed) {
-      			camera_position_c += (-camera_view_vector * speed * deltaT);
-      		}
-
-      		if (g_RightKeyPressed) {
-      			camera_position_c += (-crossproduct(camera_up_vector, camera_view_vector) * speed * deltaT);
-      		}
+                if (g_RightKeyPressed) {
+                    camera_position_c += (-crossproduct(camera_up_vector, camera_view_vector) * speed * deltaT);
+                }
+            }
         } else {
             camera_position_c  = glm::vec4(narutoX + 10.0f, narutoY + 7.0f, narutoZ, 1.0f); // Ponto "c", centro da câmera
             camera_lookat_l    = glm::vec4(narutoX, narutoY, narutoZ, 1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
-            camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
         }
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -1017,9 +1031,7 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
                 if ( idx.texcoord_index != -1 )
                 {
                     const float u = model->attrib.texcoords[2*idx.texcoord_index + 0];
-                    //printf("u: %f  ", u);
                     const float v = model->attrib.texcoords[2*idx.texcoord_index + 1];
-                    //printf("v: %f\n", v);
                     texture_coefficients.push_back( u );
                     texture_coefficients.push_back( v );
                 }
@@ -1149,6 +1161,51 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
     // "Desligamos" o VAO, evitando assim que operações posteriores venham a
     // alterar o mesmo. Isso evita bugs.
     glBindVertexArray(0);
+}
+
+// curva bezier cubica, dados 4 pontos, o tempo atual, o tempo de inicio, e um "passo"
+glm::vec4 CubicBezier(glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, glm::vec4 p4, unsigned int time, unsigned int start_time, double step) {
+    double t = (time - start_time)*(step);
+
+    return glm::vec4((pow(1-t,3))*p1.x + 3*(pow(1-t,2))*t*p2.x + 3*(1-t)*(pow(t,2))*p3.x + (pow(t,3))*p4.x,
+                     (pow(1-t,3))*p1.y + 3*(pow(1-t,2))*t*p2.y + 3*(1-t)*(pow(t,2))*p3.y + (pow(t,3))*p4.y,
+                     (pow(1-t,3))*p1.z + 3*(pow(1-t,2))*t*p2.z + 3*(1-t)*(pow(t,2))*p3.z + (pow(t,3))*p4.z, 1);
+}
+
+// animacao de inicio
+glm::vec4 StartAnimation(unsigned int *frame_counter, bool *start_animation_active) {
+    static glm::vec4 p0 = glm::vec4(-30.0,15.0,-5.0,1.0);
+    static glm::vec4 p1 = glm::vec4(-15.0,15.0,-15.0,1.0);
+    static glm::vec4 p2 = glm::vec4(-12.0,11.0,-9.0,1.0);
+    static glm::vec4 p3 = glm::vec4(-9.0,8.0,-8.0,1.0);
+    static glm::vec4 p4 = glm::vec4(2*p3.x-p2.x, 2*p3.y-p2.y, 2*p3.z-p2.z, 1.0);
+    static glm::vec4 p5 = glm::vec4(-6.0,7.0,-8.0,1.0);
+    static glm::vec4 p6 = glm::vec4(-7.0,7.0,-4.0,1.0);
+    static glm::vec4 p7 = glm::vec4(2*p6.x-p5.x, 2*p6.y-p5.y, 2*p6.z-p5.z, 1.0);
+    static glm::vec4 p8 = glm::vec4(-5.0,6.0,2.0,1.0);
+    static glm::vec4 p9 = glm::vec4(3.0,4.0,2.0,1.0);
+    static glm::vec4 p10 = glm::vec4(2*p9.x-p8.x, 2*p9.y-p8.y, 2*p9.z-p8.z, 1.0);
+    static glm::vec4 p11 = glm::vec4(1.0,2.0,1.0,1.0);
+    static glm::vec4 p12 = glm::vec4(0.0,1.0,0.0,1.0);
+    static unsigned int frames_per_curve = 250; // quantos frames as curvas duram (tornar em uma constante dps?)
+    static double inverse_fpc = 0.004; // inverso do "frames_per_curve", pra fazer uma multiplicação com o frame_counter, ao invez de uma divisao (lerda)
+    switch((*frame_counter)/frames_per_curve) {
+        case 0: printf("a");
+                return CubicBezier(p0, p1, p2, p3, ++(*frame_counter), 0, inverse_fpc);
+                break;
+        case 1: printf("b");
+                return CubicBezier(p3, p4, p5, p6, ++(*frame_counter), frames_per_curve, inverse_fpc);
+                break;
+        case 2: printf("c");
+                return CubicBezier(p6, p7, p8, p9, ++(*frame_counter), 2*frames_per_curve, inverse_fpc);
+                break;
+        case 3: printf("d");
+                return CubicBezier(p9, p10, p11, p12, ++(*frame_counter), 3*frames_per_curve, inverse_fpc);
+                break;
+        default: *start_animation_active = false;
+    }
+
+    return glm::vec4(0.0,0.0,0.0,1.0);
 }
 
 // Carrega um Vertex Shader de um arquivo GLSL. Veja definição de LoadShader() abaixo.
@@ -1799,25 +1856,25 @@ void PrintObjModelInfo(ObjModel* model)
   printf("# of shapes    : %d\n", (int)shapes.size());
   printf("# of materials : %d\n", (int)materials.size());
 
-  //for (size_t v = 0; v < attrib.vertices.size() / 3; v++) {
-  //  printf("  v[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
-  //         static_cast<const double>(attrib.vertices[3 * v + 0]),
-  //         static_cast<const double>(attrib.vertices[3 * v + 1]),
-  //         static_cast<const double>(attrib.vertices[3 * v + 2]));
-  //}
+  for (size_t v = 0; v < attrib.vertices.size() / 3; v++) {
+    printf("  v[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
+           static_cast<const double>(attrib.vertices[3 * v + 0]),
+           static_cast<const double>(attrib.vertices[3 * v + 1]),
+           static_cast<const double>(attrib.vertices[3 * v + 2]));
+  }
 
-  //for (size_t v = 0; v < attrib.normals.size() / 3; v++) {
-  //    printf("  n[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
-  //         static_cast<const double>(attrib.normals[3 * v + 0]),
-  //         static_cast<const double>(attrib.normals[3 * v + 1]),
-  //         static_cast<const double>(attrib.normals[3 * v + 2]));
-  //}
+  for (size_t v = 0; v < attrib.normals.size() / 3; v++) {
+      printf("  n[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
+           static_cast<const double>(attrib.normals[3 * v + 0]),
+           static_cast<const double>(attrib.normals[3 * v + 1]),
+           static_cast<const double>(attrib.normals[3 * v + 2]));
+  }
 
-  //for (size_t v = 0; v < attrib.texcoords.size() / 2; v++) {
-  //  printf("  uv[%ld] = (%f, %f)\n", static_cast<long>(v),
-  //         static_cast<const double>(attrib.texcoords[2 * v + 0]),
-  //         static_cast<const double>(attrib.texcoords[2 * v + 1]));
-  //}
+  for (size_t v = 0; v < attrib.texcoords.size() / 2; v++) {
+    printf("  uv[%ld] = (%f, %f)\n", static_cast<long>(v),
+           static_cast<const double>(attrib.texcoords[2 * v + 0]),
+           static_cast<const double>(attrib.texcoords[2 * v + 1]));
+  }
 
   // For each shape
   for (size_t i = 0; i < shapes.size(); i++) {
