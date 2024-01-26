@@ -225,6 +225,7 @@ bool g_WKeyPressed = false;
 bool g_AKeyPressed = false;
 bool g_SKeyPressed = false;
 bool g_DKeyPressed = false;
+bool g_SpaceKeyPressed = false;
 
 
 // Variável que controla se o texto informativo será mostrado na tela.
@@ -245,6 +246,8 @@ GLuint g_NumLoadedTextures = 0;
 float narutoX = 0.0f;
 float narutoY = 0.0f;
 float narutoZ = 0.0f;
+
+float gravity = 9.81f;
 
 int main(int argc, char* argv[])
 {
@@ -543,12 +546,19 @@ int main(int argc, char* argv[])
         if (g_DKeyPressed) {
             narutoZ -= 3.0f * deltaT;
         }
-        // MOVIMENTOS DIRETAMENTE PARA A ESQUERDA E DIREITA NAO FAZEM SENTIDO, CERTO?
-        // LOGO, PRECISAMOS DESCOBRI UM MEIO DE MOVIMENTAR O PERSONAGEM NAS DIAGONAIS
-        // OU SEJA, QUANDO QUEREMOS PULAR PARA UM OBSTACULO A ESQUERDA, APERTAMOS 'W' PARA IR PARA A FRENTE
-        // E 'A' PARA IR PARA A ESQUERDA AO MESMO TEMPO
-        //
-        // ALEM DISSO, PRECISAMOS DE UM MEIO DE O PERSONAGEM GIRAR NO SEU PROPIO EIXO PARA MUDAR DE DIREÇÃO
+
+        // PULO DO NARUTO
+        float prev_narutoY = narutoY;
+        if (g_SpaceKeyPressed) {
+            narutoY += 2.0f * deltaT * gravity;
+            gravity -= 0.8f;
+            if(narutoY < 0.0f) {
+                g_SpaceKeyPressed = false;
+                gravity = 9.81f;
+                narutoY = 0.0f;
+            }
+        }
+    
 
         // Desenhamos o modelo do personagem principal
         model = Matrix_Translate(narutoX, narutoY, narutoZ);
@@ -1706,6 +1716,14 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         else if (action == GLFW_RELEASE)
         {
             g_DKeyPressed = false;
+        }
+    }
+    // key que controla o pulo sera o SPACE
+    if (key == GLFW_KEY_SPACE)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_SpaceKeyPressed = true;
         }
     }
 }
