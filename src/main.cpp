@@ -395,7 +395,6 @@ int main(int argc, char* argv[])
     glm::vec4 camera_lookat_l = glm::vec4(narutoX, narutoY, narutoZ, 1.0f); ;
 
     float prev_time = (float) glfwGetTime();
-    float prev_time_naruto = (float) glfwGetTime();
     float speed = 1.0f;
 
     glm::vec4 result = glm::vec4(0.0,0.0,0.0,1.0);
@@ -443,6 +442,10 @@ int main(int argc, char* argv[])
         glm::vec4 camera_view_vector;// = -glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
         glm::vec4 camera_up_vector = glm::vec4(0.0f,1.0f,0.0f,0.0f);;//   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
+        float curr_time = (float) glfwGetTime();
+        float deltaT = curr_time - prev_time;
+        prev_time = curr_time;
+
         if(g_UseFreeCamera) {
             if(start_animation_active) {
                 camera_position_c = result;
@@ -450,9 +453,6 @@ int main(int argc, char* argv[])
             } else {
                 camera_view_vector = -glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
 
-                float curr_time = (float) glfwGetTime();
-                float deltaT = curr_time - prev_time;
-                prev_time = curr_time;
                 if (g_UpKeyPressed) {
                     camera_position_c += (camera_view_vector * speed * deltaT);
                 }
@@ -529,16 +529,19 @@ int main(int argc, char* argv[])
 
         // PARA A FRENTE
         if (g_WKeyPressed) {
-            float timeNow = (float) glfwGetTime();
-  		    float deltaN = timeNow - prev_time_naruto;
-            narutoX += -0.2f * deltaN * 0.02;
+            narutoX -= 3.0f * deltaT;
         }
-
-        // PARA A TRAS
+        // PARA TRAS
         if (g_SKeyPressed) {
-            float timeNow = (float) glfwGetTime();
-  		    float deltaN = timeNow - prev_time_naruto;
-            narutoX += 0.2f * deltaN * 0.02;
+            narutoX += 3.0f * deltaT;
+        }
+        // PARA A ESQUERDA
+        if (g_AKeyPressed) {
+            narutoZ += 3.0f * deltaT;
+        }
+        // PARA A DIREITA
+        if (g_DKeyPressed) {
+            narutoZ -= 3.0f * deltaT;
         }
         // MOVIMENTOS DIRETAMENTE PARA A ESQUERDA E DIREITA NAO FAZEM SENTIDO, CERTO?
         // LOGO, PRECISAMOS DESCOBRI UM MEIO DE MOVIMENTAR O PERSONAGEM NAS DIAGONAIS
