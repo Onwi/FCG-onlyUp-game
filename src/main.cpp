@@ -155,6 +155,8 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 int mapTextureNameIndex(std::string textureName);
 glm::vec4 CubicBezier(glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, glm::vec4 p4, unsigned int time, unsigned int start_time, double step);
 glm::vec4 StartAnimation(unsigned int *frame_counter, bool *start_animation_active);
+std::array<glm::vec3, 2> calculaBBOX(ObjModel object, float scale_x, float scale_y, float scale_z,
+                                        float tranlate_x, float tranlate_y, float tranlate_z);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -408,13 +410,16 @@ int main(int argc, char* argv[])
     unsigned int frame_counter = 0; // for the bezier curve
 
     bool start_animation_active = true;
+    const float minval = std::numeric_limits<float>::min();
+    const float maxval = std::numeric_limits<float>::max();
+
+    std::array<glm::vec3, 2> bbox_results;
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
         // PEGA A POSICAO PARA A ANIMACAO INICIAL USANDO CURVAS BEZIER CUBICAS
         camera_position_animation = StartAnimation(&frame_counter, &start_animation_active);
-        // Aqui executamos as operações de renderização
 
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
         // definida como coeficientes RGBA: Red, Green, Blue, Alpha; isto é:
@@ -552,7 +557,6 @@ int main(int argc, char* argv[])
         }
 
         // PULO DO NARUTO
-        float prev_narutoY = narutoY;
         if (g_SpaceKeyPressed) {
             narutoY += 2.0f * deltaT * gravity;
             gravity -= 0.8f;
@@ -563,6 +567,70 @@ int main(int argc, char* argv[])
             }
         }
 
+        // COLISOES
+        bool colision = false;
+
+        // computamos a bbox min e max do personagem
+        // o modelo usado contem varios objectos, logo precisaos calcular baseado nesses objetos
+        std::vector<tinyobj::shape_t> shapes = characterModel.shapes;
+        glm::vec3 character_bbox_min = glm::vec3(maxval,maxval,maxval);
+        glm::vec3 character_bbox_max = glm::vec3(minval,minval,minval);
+
+        for (size_t shape = 0; shape < shapes.size(); ++shape) {
+            if (g_VirtualScene[characterModel.shapes[shape].name].bbox_min.x < character_bbox_min.x) {
+                character_bbox_min.x = g_VirtualScene[characterModel.shapes[shape].name].bbox_min.x;
+            }
+            if (g_VirtualScene[characterModel.shapes[shape].name].bbox_max.x > character_bbox_max.x) {
+                character_bbox_max.x = g_VirtualScene[characterModel.shapes[shape].name].bbox_max.x;
+            }
+            if (g_VirtualScene[characterModel.shapes[shape].name].bbox_min.y < character_bbox_min.y) {
+                character_bbox_min.y = g_VirtualScene[characterModel.shapes[shape].name].bbox_min.y;
+            }
+            if (g_VirtualScene[characterModel.shapes[shape].name].bbox_max.y > character_bbox_max.y) {
+                character_bbox_max.y = g_VirtualScene[characterModel.shapes[shape].name].bbox_max.y;
+            }
+            if (g_VirtualScene[characterModel.shapes[shape].name].bbox_min.z < character_bbox_min.z) {
+                character_bbox_min.z = g_VirtualScene[characterModel.shapes[shape].name].bbox_min.z;
+            }
+            if (g_VirtualScene[characterModel.shapes[shape].name].bbox_max.z > character_bbox_max.z) {
+                character_bbox_max.z = g_VirtualScene[characterModel.shapes[shape].name].bbox_max.z;
+            }
+        }
+        character_bbox_min.x += narutoX;
+        character_bbox_min.y += narutoY;
+        character_bbox_min.z += narutoZ;
+        character_bbox_max.x += narutoX;
+        character_bbox_max.y += narutoY;
+        character_bbox_max.z += narutoZ;
+
+        //printf("bbox min: %f \n", character_bbox_min.y);
+        //printf("bbox max: %f \n", character_bbox_max.y);
+
+        // calculamos as bbox dos demais objetos na cena
+        // ESFERA                               Matrix_Scale       Matrix_Translate
+        bbox_results = calculaBBOX(sphereModel, 1.0f,0.6f,1.0f,   -3.0,-0.6,0.0f);
+
+        glm::vec3 sphere_bbox_min = bbox_results[0];
+        glm::vec3 sphere_bbox_max = bbox_results[1];
+
+        if (character_bbox_min.x <= sphere_bbox_max.x
+        &&  character_bbox_max.x >= sphere_bbox_min.x
+        &&  character_bbox_min.y <= sphere_bbox_max.y
+        &&  character_bbox_max.y >= sphere_bbox_min.y
+        &&  character_bbox_min.z <= sphere_bbox_max.z
+        &&  character_bbox_max.z >= sphere_bbox_min.z) {
+            colision = true;
+        }
+
+        if (colision) {
+            printf("colidiou porra\n");
+            colision = false;
+        }
+
+
+
+        // COLISOES
+    
 
         // Desenhamos o modelo do personagem principal
         model = Matrix_Translate(narutoX, narutoY, narutoZ);
@@ -665,13 +733,16 @@ int main(int argc, char* argv[])
             glUniform1i(g_vertex_shading_uniform, 0);
         }
 
-        /*// Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawVirtualObject("the_bunny");
-        */
+        // USE OS BOTOES 'V' E 'B' PARA MUDAR O TIPO DE SHADING
+        if(g_usePhongShading)
+        {
+            glUniform1i(g_vertex_shading_uniform, 1);
+        }
+        else
+        {
+            glUniform1i(g_vertex_shading_uniform, 0);
+        }
+
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
         TextRendering_ShowEulerAngles(window);
@@ -703,6 +774,36 @@ int main(int argc, char* argv[])
 
     // Fim do programa
     return 0;
+}
+
+std::array<glm::vec3, 2> calculaBBOX(ObjModel object, float scale_x, float scale_y, float scale_z,
+                                        float tranlate_x, float tranlate_y, float tranlate_z) {
+    std::array<glm::vec3, 2> min_and_max;
+    glm::vec3 min = g_VirtualScene[object.shapes[0].name].bbox_min;
+    glm::vec3 max = g_VirtualScene[object.shapes[0].name].bbox_max;
+    
+    // aplicando o mesmo Matrix_Scale da hora de desenhar o objeto
+    min.x *= scale_x;
+    min.y *= scale_y;
+    min.z *= scale_z;
+
+    max.x *= scale_x;
+    max.y *= scale_y;
+    max.z *= scale_z;
+
+    // aplicando o mesmo Matrix_Translate da hora de desenhar o objeto
+    min.x += tranlate_x;
+    min.y += tranlate_y;
+    min.z += tranlate_z;
+
+    max.x += tranlate_x;
+    max.y += tranlate_y;
+    max.z += tranlate_z;
+
+    min_and_max[0] = min;
+    min_and_max[1] = max;
+
+    return min_and_max;
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
