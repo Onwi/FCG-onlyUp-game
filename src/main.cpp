@@ -157,7 +157,7 @@ glm::vec4 CubicBezier(glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, glm::vec4 p4, un
 glm::vec4 StartAnimation(unsigned int *frame_counter, bool *start_animation_active);
 std::array<glm::vec3, 2> calculaBBOX(ObjModel object, float scale_x, float scale_y, float scale_z,
                                         float tranlate_x, float tranlate_y, float tranlate_z);
-bool check_colision(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max);
+bool check_colision(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max, float *objY);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -416,6 +416,9 @@ int main(int argc, char* argv[])
 
     std::array<glm::vec3, 2> bbox_results;
 
+    float objY = 0.0f;
+    bool colision = false;
+
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -558,18 +561,18 @@ int main(int argc, char* argv[])
         }
 
         // PULO DO NARUTO
-        if (g_SpaceKeyPressed) {
+        if (g_SpaceKeyPressed && !colision) {
             narutoY += 2.0f * deltaT * gravity;
             gravity -= 0.8f;
-            if(narutoY < 0.0f) {
+            if(narutoY < objY) {
                 g_SpaceKeyPressed = false;
                 gravity = 9.81f;
-                narutoY = 0.0f;
+                narutoY = objY;
             }
         }
 
         // COLISOES
-        bool colision = false;
+        
 
         // computamos a bbox min e max do personagem
         // o modelo usado contem varios objectos, logo precisaos calcular baseado nesses objetos
@@ -657,25 +660,33 @@ int main(int argc, char* argv[])
         pipe_bbox_max.y += 1.2f;
         pipe_bbox_min.y += 1.2f;
 
-        if (check_colision(character_bbox_min, character_bbox_max, sphere_bbox_min, sphere_bbox_max) ||
-            check_colision(character_bbox_min, character_bbox_max, block_bbox_min , block_bbox_max)  ||
-            check_colision(character_bbox_min, character_bbox_max, pizza_bbox_min , pizza_bbox_max)  ||
-            check_colision(character_bbox_min, character_bbox_max, box_bbox_min   , box_bbox_max)    ||
-            check_colision(character_bbox_min, character_bbox_max, bridge_bbox_min, bridge_bbox_max) ||
-            check_colision(character_bbox_min, character_bbox_max, cow_bbox_min   , cow_bbox_max)    ||
-            check_colision(character_bbox_min, character_bbox_max, pipe_bbox_min  , pipe_bbox_max)
+        if (check_colision(character_bbox_min, character_bbox_max, sphere_bbox_min, sphere_bbox_max, &objY) ||
+            check_colision(character_bbox_min, character_bbox_max, block_bbox_min , block_bbox_max , &objY) ||
+            check_colision(character_bbox_min, character_bbox_max, pizza_bbox_min , pizza_bbox_max , &objY) ||
+            check_colision(character_bbox_min, character_bbox_max, box_bbox_min   , box_bbox_max   , &objY) ||
+            check_colision(character_bbox_min, character_bbox_max, bridge_bbox_min, bridge_bbox_max, &objY) ||
+            check_colision(character_bbox_min, character_bbox_max, cow_bbox_min   , cow_bbox_max   , &objY) ||
+            check_colision(character_bbox_min, character_bbox_max, pipe_bbox_min  , pipe_bbox_max  , &objY)
         ) colision = true;
 
-        if (colision) {
+        if (colision && g_SpaceKeyPressed) {
+            narutoY += 2.0f * deltaT * gravity;
+            gravity -= 0.8f;
+            if(narutoY < objY) {
+                g_SpaceKeyPressed = false;
+                gravity = 9.81f;
+                narutoY = objY;
+            }
+        } else if (colision) {
             printf("bbox max y: %f\n", sphere_bbox_max.y);
             printf("bbox min y: %f\n", sphere_bbox_min.y);
             printf("naruot y: %f\n", narutoY);
-            narutoY = sphere_bbox_max.y;
+            narutoY = objY;
             colision = false;
         } else if (!colision && !g_SpaceKeyPressed) {
             narutoY = 0.0f;
+            objY = 0.0f;
         }
-
 
 
         // COLISOES
@@ -855,13 +866,14 @@ std::array<glm::vec3, 2> calculaBBOX(ObjModel object, float scale_x, float scale
     return min_and_max;
 }
 
-bool check_colision(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max) {
+bool check_colision(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max, float *objY) {
 if (character_bbox_min.x <= obj_bbox_max.x
         &&  character_bbox_max.x >= obj_bbox_min.x
         &&  character_bbox_min.y <= obj_bbox_max.y
         &&  character_bbox_max.y >= obj_bbox_min.y
         &&  character_bbox_min.z <= obj_bbox_max.z
         &&  character_bbox_max.z >= obj_bbox_min.z) {
+            *objY = obj_bbox_max.y;
             return true;
         } else return false;
 }
