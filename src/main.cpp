@@ -226,6 +226,8 @@ bool g_AKeyPressed = false;
 bool g_SKeyPressed = false;
 bool g_DKeyPressed = false;
 bool g_SpaceKeyPressed = false;
+// variavel que controla o tipo de shading
+bool g_usePhongShading = true;
 
 
 // Variável que controla se o texto informativo será mostrado na tela.
@@ -239,6 +241,7 @@ GLint g_projection_uniform;
 GLint g_object_id_uniform;
 GLint g_bbox_min_uniform;
 GLint g_bbox_max_uniform;
+GLint g_vertex_shading_uniform;
 
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
@@ -400,7 +403,7 @@ int main(int argc, char* argv[])
     float prev_time = (float) glfwGetTime();
     float speed = 1.0f;
 
-    glm::vec4 result = glm::vec4(0.0,0.0,0.0,1.0);
+    glm::vec4 camera_position_animation = glm::vec4(0.0,0.0,0.0,1.0);
 
     unsigned int frame_counter = 0; // for the bezier curve
 
@@ -409,8 +412,8 @@ int main(int argc, char* argv[])
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
-        result = StartAnimation(&frame_counter, &start_animation_active);
-        printf("%f, %f, %f, %d, %d\n", result.x, result.y, result.z, frame_counter, start_animation_active);
+        // PEGA A POSICAO PARA A ANIMACAO INICIAL USANDO CURVAS BEZIER CUBICAS
+        camera_position_animation = StartAnimation(&frame_counter, &start_animation_active);
         // Aqui executamos as operações de renderização
 
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
@@ -450,8 +453,9 @@ int main(int argc, char* argv[])
         prev_time = curr_time;
 
         if(g_UseFreeCamera) {
+            // SE A ANIMACAO INICIAL ESTIVER ATIVA, ELE FIXA A CAMERA NA POSICAO NA CURVA BEZIER, COM VETOR (1,1,1)
             if(start_animation_active) {
-                camera_position_c = result;
+                camera_position_c = camera_position_animation;
                 camera_view_vector = -glm::vec4(1.0,1.0,1.0,0.0f); // Vetor "view", sentido para onde a câmera está virada
             } else {
                 camera_view_vector = -glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
@@ -503,7 +507,7 @@ int main(int argc, char* argv[])
             // PARA PROJEÇÃO ORTOGRÁFICA veja slides 219-224 do documento Aula_09_Projecoes.pdf.
             // Para simular um "zoom" ortográfico, computamos o valor de "t"
             // utilizando a variável g_CameraDistance.
-            float t = 1.5f*g_CameraDistance/2.5f;
+            float t = 1.0f*g_CameraDistance/2.5f;
             float b = -t;
             float r = t*g_ScreenRatio;
             float l = -r;
@@ -558,7 +562,7 @@ int main(int argc, char* argv[])
                 narutoY = 0.0f;
             }
         }
-    
+
 
         // Desenhamos o modelo do personagem principal
         model = Matrix_Translate(narutoX, narutoY, narutoZ);
@@ -650,6 +654,16 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
 
+
+        // USE OS BOTOES 'V' E 'B' PARA MUDAR O TIPO DE SHADING
+        if(g_usePhongShading)
+        {
+            glUniform1i(g_vertex_shading_uniform, 1);
+        }
+        else
+        {
+            glUniform1i(g_vertex_shading_uniform, 0);
+        }
 
         /*// Desenhamos o modelo do coelho
         model = Matrix_Translate(1.0f,0.0f,0.0f)
@@ -818,6 +832,7 @@ void LoadShadersFromFiles()
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
     g_bbox_min_uniform   = glGetUniformLocation(g_GpuProgramID, "bbox_min");
     g_bbox_max_uniform   = glGetUniformLocation(g_GpuProgramID, "bbox_max");
+    g_vertex_shading_uniform  = glGetUniformLocation(g_GpuProgramID, "vertex_lighting");
 
     // Variáveis em "shader_fragment.glsl" para acesso das imagens de textura
     glUseProgram(g_GpuProgramID);
@@ -1203,17 +1218,13 @@ glm::vec4 StartAnimation(unsigned int *frame_counter, bool *start_animation_acti
     static unsigned int frames_per_curve = 250; // quantos frames as curvas duram (tornar em uma constante dps?)
     static double inverse_fpc = 0.004; // inverso do "frames_per_curve", pra fazer uma multiplicação com o frame_counter, ao invez de uma divisao (lerda)
     switch((*frame_counter)/frames_per_curve) {
-        case 0: printf("a");
-                return CubicBezier(p0, p1, p2, p3, ++(*frame_counter), 0, inverse_fpc);
+        case 0: return CubicBezier(p0, p1, p2, p3, ++(*frame_counter), 0, inverse_fpc);
                 break;
-        case 1: printf("b");
-                return CubicBezier(p3, p4, p5, p6, ++(*frame_counter), frames_per_curve, inverse_fpc);
+        case 1: return CubicBezier(p3, p4, p5, p6, ++(*frame_counter), frames_per_curve, inverse_fpc);
                 break;
-        case 2: printf("c");
-                return CubicBezier(p6, p7, p8, p9, ++(*frame_counter), 2*frames_per_curve, inverse_fpc);
+        case 2: return CubicBezier(p6, p7, p8, p9, ++(*frame_counter), 2*frames_per_curve, inverse_fpc);
                 break;
-        case 3: printf("d");
-                return CubicBezier(p9, p10, p11, p12, ++(*frame_counter), 3*frames_per_curve, inverse_fpc);
+        case 3: return CubicBezier(p9, p10, p11, p12, ++(*frame_counter), 3*frames_per_curve, inverse_fpc);
                 break;
         default: *start_animation_active = false;
     }
@@ -1724,6 +1735,24 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         if (action == GLFW_PRESS)
         {
             g_SpaceKeyPressed = true;
+        }
+    }
+
+    // USAR VERTEX SHADDING
+    if (key == GLFW_KEY_V)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_usePhongShading = false;
+        }
+    }
+
+    // USAR FRAGMENT SHADDING
+    if (key == GLFW_KEY_B)
+    {
+        if (action == GLFW_PRESS)
+        {
+            g_usePhongShading = true;
         }
     }
 }
