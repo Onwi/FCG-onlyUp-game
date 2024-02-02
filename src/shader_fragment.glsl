@@ -17,6 +17,7 @@ in vec3 Ka;
 in vec3 Kd;
 in vec3 Ks;
 flat in int textureId;
+in vec4 color_vs;
 
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
@@ -53,6 +54,8 @@ uniform sampler2D TextureImage8;
 uniform sampler2D TextureImage9;
 uniform sampler2D TextureImage10;
 
+uniform int vertex_lighting;
+
 // TID = TEXTURE_ID
 #define GRAY_COLOR_TID 0
 #define NARUTO_TEXTURE_1_TID 1
@@ -74,6 +77,12 @@ out vec4 color;
 
 void main()
 {
+    if(vertex_lighting == 0)
+    {
+        color = color_vs;
+
+        return;
+    }
     // Obtemos a posição da câmera utilizando a inversa da matriz que define o
     // sistema de coordenadas da câmera.
     vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
@@ -95,7 +104,7 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.5,0.0));
+    vec4 l = normalize(camera_position - p);
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
@@ -138,7 +147,7 @@ void main()
     vec3 ambient_term = this_ka*Ia; // PREENCHA AQUI o termo ambiente
 
     // Termo especular utilizando o modelo de iluminação de Phong
-    vec3 phong_specular_term  = this_ks*I*pow(max(0,dot(r,v)),q); // PREENCH AQUI o termo especular de Phong
+    vec3 phong_specular_term  = this_ks*I*pow(max(0,dot(n,v+l)),q); // PREENCH AQUI o termo especular de Phong
 
     // Coordenadas de textura U e V
     float U = 0.0;
@@ -210,8 +219,8 @@ void main()
         float px = (position_model.x - minx) / (maxx - minx);
         float pz = (position_model.z - minz) / (maxz - minz);
 
-        U = px;
-        V = pz;
+        U = 0.4*(p.x - floor(p.x));
+        V = 0.4*(p.z - floor(p.z));
 
         vec3 Kd0 = texture(TextureImage10, vec2(U,V)).rgb;
         float lambert = max(0,dot(n,l));
