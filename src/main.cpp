@@ -253,6 +253,8 @@ float narutoX = 0.0f;
 float narutoY = 0.0f;
 float narutoZ = 0.0f;
 
+float narutoTheta = 0.0f;
+
 float gravity = 9.81f;
 
 int main(int argc, char* argv[])
@@ -419,6 +421,8 @@ int main(int argc, char* argv[])
     float objY = 0.0f;
     bool colision = false;
 
+    glm::vec4 direcao = glm::vec4(5.0f, 0.0f, 0.0f, 0.0f);
+
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -486,9 +490,10 @@ int main(int argc, char* argv[])
                 }
             }
         } else {
-            camera_position_c  = glm::vec4(narutoX + 10.0f, narutoY + 7.0f, narutoZ, 1.0f); // Ponto "c", centro da câmera
+            camera_position_c  = glm::vec4(narutoX + direcao[0]*2, 10, narutoZ - direcao[2]*2, 1.0f); // Ponto "c", centro da câmera
             camera_lookat_l    = glm::vec4(narutoX, narutoY, narutoZ, 1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+            camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
         }
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -545,19 +550,23 @@ int main(int argc, char* argv[])
 
         // PARA A FRENTE
         if (g_WKeyPressed) {
-            narutoX -= 3.0f * deltaT;
+            narutoZ += direcao[2]*deltaT;
+            narutoX -= direcao[0]*deltaT;
         }
         // PARA TRAS
         if (g_SKeyPressed) {
-            narutoX += 3.0f * deltaT;
+            narutoZ -= direcao[2]*deltaT;
+            narutoX += direcao[0]*deltaT;
+        }
+
+        if (g_DKeyPressed) {
+            narutoTheta -= 1.0f*deltaT;
+            direcao = rotationY(narutoTheta) * glm::vec4(5.0f, 0.0f, 0.0f, 0.0f);
         }
         // PARA A ESQUERDA
         if (g_AKeyPressed) {
-            narutoZ += 3.0f * deltaT;
-        }
-        // PARA A DIREITA
-        if (g_DKeyPressed) {
-            narutoZ -= 3.0f * deltaT;
+            narutoTheta += 1.0f*deltaT;
+            direcao = rotationY(narutoTheta) * glm::vec4(5.0f, 0.0f, 0.0f, 0.0f);
         }
 
         // PULO DO NARUTO
@@ -693,7 +702,8 @@ int main(int argc, char* argv[])
     
 
         // Desenhamos o modelo do personagem principal
-        model = Matrix_Translate(narutoX, narutoY, narutoZ);
+        model = Matrix_Translate(narutoX, narutoY, narutoZ)
+              * Matrix_Rotate_Y(narutoTheta);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHARACTER);
         DrawVirtualObject("Object_Bottom_Teeth");

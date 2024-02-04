@@ -364,6 +364,29 @@ void PrintMatrixVectorProductDivW(glm::mat4 M, glm::vec4 v)
     printf("[ %+0.2f  %+0.2f  %+0.2f  %+0.2f ][ %+0.2f ]   [ %+0.2f ]            [ %+0.2f ]\n", M[0][3], M[1][3], M[2][3], M[3][3], v[3], r[3], r[3]/w);
 }
 
+glm::mat4 rotationX(float angle)
+{
+    return glm::mat4(1.0, 0, 0, 0,
+                     0, cos(angle), -sin(angle), 0,
+                     0, sin(angle), cos(angle), 0,
+                     0, 0, 0, 1);
+}
+
+glm::mat4 rotationY(float angle)
+{
+    return glm::mat4(cos(angle), 0, sin(angle), 0,
+                     0, 1.0, 0, 0,
+                     -sin(angle), 0, cos(angle), 0,
+                     0, 0, 0, 1);
+}
+
+glm::mat4 rotationZ(float angle)
+{
+    return glm::mat4(cos(angle), -sin(angle), 0, 0,
+                     sin(angle), cos(angle), 0, 0,
+                     0, 0, 1, 0,
+                     0, 0, 0, 1);
+}
 
 #endif // _MATRICES_H
 // vim: set spell spelllang=pt_br :
