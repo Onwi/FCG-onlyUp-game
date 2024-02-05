@@ -155,9 +155,13 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 int mapTextureNameIndex(std::string textureName);
 glm::vec4 CubicBezier(glm::vec4 p1, glm::vec4 p2, glm::vec4 p3, glm::vec4 p4, unsigned int time, unsigned int start_time, double step);
 glm::vec4 StartAnimation(unsigned int *frame_counter, bool *start_animation_active);
-std::array<glm::vec3, 2> calculaBBOX(ObjModel object, float scale_x, float scale_y, float scale_z,
+std::vector<glm::vec3> calculaBBOX(ObjModel object, float scale_x, float scale_y, float scale_z,
                                         float tranlate_x, float tranlate_y, float tranlate_z);
-bool check_colision(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max, float *objY);
+bool check_colision_bbox(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max, float *objY);
+bool check_colision_sphere(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max,
+                           float narutoX, float narutoZ, glm::vec3 sphere_center, float radius, float scale, float *objY);
+bool check_colision_cilinder(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max,
+                             float narutoX, float narutoZ, glm::vec3 sphere_center, float radius, float scale, float *objY);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -416,7 +420,7 @@ int main(int argc, char* argv[])
     const float minval = std::numeric_limits<float>::min();
     const float maxval = std::numeric_limits<float>::max();
 
-    std::array<glm::vec3, 2> bbox_results;
+    std::vector<glm::vec3> bbox_results;
 
     float objY = 0.0f;
     bool colision = false;
@@ -521,7 +525,7 @@ int main(int argc, char* argv[])
             // PARA PROJEÇÃO ORTOGRÁFICA veja slides 219-224 do documento Aula_09_Projecoes.pdf.
             // Para simular um "zoom" ortográfico, computamos o valor de "t"
             // utilizando a variável g_CameraDistance.
-            float t = 1.0f*g_CameraDistance/2.5f;
+            float t = 1.5f*g_CameraDistance/2.5f;
             float b = -t;
             float r = t*g_ScreenRatio;
             float l = -r;
@@ -621,7 +625,7 @@ int main(int argc, char* argv[])
 
         // calculamos as bbox dos demais objetos na cena
         // ESFERA                               Matrix_Scale       Matrix_Translate
-        bbox_results = calculaBBOX(sphereModel, 1.0f,0.6f,1.0f,   -3.0,-0.6,0.0f);
+        bbox_results = calculaBBOX(sphereModel, 0.8f,0.8f,0.8f,   -3.0,-0.4,0.0f);
         glm::vec3 sphere_bbox_min = bbox_results[0];
         glm::vec3 sphere_bbox_max = bbox_results[1];
         sphere_bbox_max.y += 1.2f;
@@ -663,19 +667,22 @@ int main(int argc, char* argv[])
         cow_bbox_min.y += 1.2f;
 
         // PIPE
-        bbox_results = calculaBBOX(pipeModel, 3.0f, 2.0f, 3.5f,   -9.6f,4.0f,-10.0f);
+        bbox_results = calculaBBOX(pipeModel, 3.5f, 2.0f, 3.5f,   -9.6f,4.0f,-10.0f);
         glm::vec3 pipe_bbox_min = bbox_results[0];
         glm::vec3 pipe_bbox_max = bbox_results[1];
         pipe_bbox_max.y += 1.2f;
         pipe_bbox_min.y += 1.2f;
 
-        if (check_colision(character_bbox_min, character_bbox_max, sphere_bbox_min, sphere_bbox_max, &objY) ||
-            check_colision(character_bbox_min, character_bbox_max, block_bbox_min , block_bbox_max , &objY) ||
-            check_colision(character_bbox_min, character_bbox_max, pizza_bbox_min , pizza_bbox_max , &objY) ||
-            check_colision(character_bbox_min, character_bbox_max, box_bbox_min   , box_bbox_max   , &objY) ||
-            check_colision(character_bbox_min, character_bbox_max, bridge_bbox_min, bridge_bbox_max, &objY) ||
-            check_colision(character_bbox_min, character_bbox_max, cow_bbox_min   , cow_bbox_max   , &objY) ||
-            check_colision(character_bbox_min, character_bbox_max, pipe_bbox_min  , pipe_bbox_max  , &objY)
+        if (check_colision_sphere(character_bbox_min, character_bbox_max, narutoX, narutoZ, glm::vec3(-3.0,-0.4,0.0f), 2.05f, 0.8f, &objY) ||
+            //check_colision_bbox(character_bbox_min, character_bbox_max, sphere_bbox_min, sphere_bbox_max, &objY) ||
+            check_colision_bbox(character_bbox_min, character_bbox_max, block_bbox_min , block_bbox_max , &objY) ||
+            check_colision_bbox(character_bbox_min, character_bbox_max, pizza_bbox_min , pizza_bbox_max , &objY) ||
+            check_colision_bbox(character_bbox_min, character_bbox_max, box_bbox_min   , box_bbox_max   , &objY) ||
+            check_colision_bbox(character_bbox_min, character_bbox_max, bridge_bbox_min, bridge_bbox_max, &objY) ||
+            check_colision_bbox(character_bbox_min, character_bbox_max, cow_bbox_min   , cow_bbox_max   , &objY) ||
+            //check_colision_bbox(character_bbox_min, character_bbox_max, pipe_bbox_min  , pipe_bbox_max  , &objY)
+            check_colision_cilinder(character_bbox_min, character_bbox_max, pipe_bbox_min, pipe_bbox_max, narutoX, narutoZ, glm::vec3(-9.6f,4.0f,-10.0f), 1.55f, 0.8f, &objY)
+
         ) colision = true;
 
         if (colision && g_SpaceKeyPressed) {
@@ -735,8 +742,8 @@ int main(int argc, char* argv[])
         DrawVirtualObject("the_plane");
 
         // ESFERA
-        model = Matrix_Translate(-3.0f,-0.6f,0.0f)
-              * Matrix_Scale(1.0f, 0.6f, 1.0f);
+        model = Matrix_Translate(-3.0f,-0.4f,0.0f)
+              * Matrix_Scale(0.8f, 0.8f, 0.8f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
         DrawVirtualObject("the_sphere");
@@ -763,7 +770,7 @@ int main(int argc, char* argv[])
 
         // PIPE
         model = Matrix_Translate(-9.6f,4.0f,-10.0f)
-              * Matrix_Scale(3.0f, 2.0f, 3.5f);
+              * Matrix_Scale(3.5f, 2.0f, 3.5f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PIPE);
         DrawVirtualObject("Object_color_0.247840-0.247840-0.247840.jpg");
@@ -846,12 +853,12 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-std::array<glm::vec3, 2> calculaBBOX(ObjModel object, float scale_x, float scale_y, float scale_z,
+std::vector<glm::vec3> calculaBBOX(ObjModel object, float scale_x, float scale_y, float scale_z,
                                         float tranlate_x, float tranlate_y, float tranlate_z) {
-    std::array<glm::vec3, 2> min_and_max;
+    std::vector<glm::vec3> min_and_max;
     glm::vec3 min = g_VirtualScene[object.shapes[0].name].bbox_min;
     glm::vec3 max = g_VirtualScene[object.shapes[0].name].bbox_max;
-    
+
     // aplicando o mesmo Matrix_Scale da hora de desenhar o objeto
     min.x *= scale_x;
     min.y *= scale_y;
@@ -870,20 +877,53 @@ std::array<glm::vec3, 2> calculaBBOX(ObjModel object, float scale_x, float scale
     max.y += tranlate_y;
     max.z += tranlate_z;
 
-    min_and_max[0] = min;
-    min_and_max[1] = max;
+    min_and_max.push_back(min);
+    min_and_max.push_back(max);
 
     return min_and_max;
 }
 
-bool check_colision(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max, float *objY) {
-if (character_bbox_min.x <= obj_bbox_max.x
+bool check_colision_bbox(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max, float *objY) {
+    if (character_bbox_min.x <= obj_bbox_max.x
         &&  character_bbox_max.x >= obj_bbox_min.x
         &&  character_bbox_min.y <= obj_bbox_max.y
         &&  character_bbox_max.y >= obj_bbox_min.y
         &&  character_bbox_min.z <= obj_bbox_max.z
         &&  character_bbox_max.z >= obj_bbox_min.z) {
             *objY = obj_bbox_max.y;
+            return true;
+        } else return false;
+}
+
+bool check_colision_cilinder(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max,
+                             float narutoX, float narutoZ, glm::vec3 sphere_center, float radius, float scale, float *objY) {
+    float one_over_radius = 1 / radius;
+    float one_half_radius = radius * 0.5f;
+    float one_third_radius = radius * 0.333333f;
+     if (character_bbox_min.x <= sphere_center.x + one_third_radius
+        &&  character_bbox_max.x >= sphere_center.x - one_third_radius
+        &&  character_bbox_min.y <= sphere_center.y + radius
+        &&  character_bbox_max.y >= sphere_center.y - radius
+        &&  character_bbox_min.z <= obj_bbox_max.z
+        &&  character_bbox_max.z >= obj_bbox_min.z) {
+            printf("%f", sphere_center.y + one_half_radius * (1 + cos((sphere_center.x - narutoX)*one_over_radius)));
+            *objY = sphere_center.y + one_half_radius * (1 + cos((sphere_center.x - narutoX)*one_over_radius));
+            return true;
+        } else return false;
+}
+
+bool check_colision_sphere(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, float narutoX, float narutoZ, glm::vec3 sphere_center, float radius, float scale, float *objY) {
+    float one_over_radius = 1 / radius;
+    float one_half_radius = radius * 0.5f;
+    float one_third_radius = radius * 0.333333f;
+     if (character_bbox_min.x <= sphere_center.x + one_third_radius
+        &&  character_bbox_max.x >= sphere_center.x - one_third_radius
+        &&  character_bbox_min.y <= sphere_center.y + radius
+        &&  character_bbox_max.y >= sphere_center.y - radius
+        &&  character_bbox_min.z <= sphere_center.z + one_third_radius
+        &&  character_bbox_max.z >= sphere_center.z - one_third_radius) {
+            printf("%f", sphere_center.y + one_half_radius * (1 + 0.5*(cos((sphere_center.x - narutoX)*one_over_radius) + cos((sphere_center.y - narutoZ)*one_over_radius))));
+            *objY = sphere_center.y + one_half_radius * (1 + 0.5*(cos((sphere_center.x - narutoX)*one_over_radius) + cos((sphere_center.y - narutoZ)*one_over_radius)));
             return true;
         } else return false;
 }
