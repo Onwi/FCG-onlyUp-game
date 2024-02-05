@@ -36,6 +36,10 @@ uniform int object_id;
 #define PIPE_ID 6
 #define COW_ID 7
 #define BRIDGE_ID 8
+#define BUNNY_ID 9
+#define CAR_ID 10
+#define FINAL_PLANE_ID 11
+#define SKYBOX_ID 12
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
 uniform vec4 bbox_min;
@@ -53,6 +57,8 @@ uniform sampler2D TextureImage7;
 uniform sampler2D TextureImage8;
 uniform sampler2D TextureImage9;
 uniform sampler2D TextureImage10;
+uniform sampler2D TextureImage11;
+uniform sampler2D TextureImage12;
 
 uniform int vertex_lighting;
 
@@ -67,6 +73,9 @@ uniform int vertex_lighting;
 #define COW_TID 7
 #define PIPE_TID 8
 #define PIZZA_TID 9
+#define CHAO_TID 10
+#define WORLD_TID 11
+#define CAR_TID 12
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -115,19 +124,34 @@ void main()
     // Parâmetros que definem as propriedades espectrais da superfície
     float q; // Expoente especular para o modelo de iluminação de Phong
 
-    if ( object_id == SPHERE_ID )
+    if(object_id == SKYBOX_ID) {
+        this_kd = vec3(0.5,0.5,0.5);
+        this_ks = vec3(0.02,0.02,0.02);
+        this_ka = vec3(0.0,0.0,0.0);
+        q = 5.0;
+    }
+    else if ( object_id == SPHERE_ID )
     {
         this_kd = vec3(0.8,0.4,0.08);
         this_ks = vec3(0.01,0.01,0.01);
         this_ka = vec3(0.4,0.2,0.04);
         q = 1.0;
     }
-    else if ( object_id == PLANE_ID )
+    else if ( object_id == BUNNY_ID )
+    {
+        // PREENCHA AQUI
+        // Propriedades espectrais do coelho
+        this_kd = vec3(0.08,0.4,0.8);
+        this_ks = vec3(0.01,0.01,0.01);
+        this_ka = vec3(0.04,0.2,0.4);
+        q = 5.0;
+    }
+    else if ( object_id == PLANE_ID || object_id == FINAL_PLANE_ID )
     {
         this_kd = vec3(0.2,0.7,0.2);
         this_ks = vec3(0.01,0.01,0.01);
         this_ka = vec3(0.0,0.0,0.0);
-        q = 20.0;
+        q = 4.0;
     }
     else // Objeto desconhecido = preto
     {
@@ -155,7 +179,7 @@ void main()
 
     float radius = 1.0f;
 
-    if ( object_id == SPHERE_ID )
+    if ( object_id == SPHERE_ID || object_id == SKYBOX_ID)
     {
         // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
         // projeção esférica EM COORDENADAS DO MODELO. Utilize como referência
@@ -182,17 +206,13 @@ void main()
         U = (theta + M_PI)/(2*M_PI);
         V = (phi + M_PI_2)/(M_PI);
     }
-    else if ( object_id == 100 ) // BUNNY
+    else if ( object_id == PLANE_ID || object_id == FINAL_PLANE_ID)
     {
-        // PREENCHA AQUI as coordenadas de textura do coelho, computadas com
-        // projeção planar XY em COORDENADAS DO MODELO. Utilize como referência
-        // o slides 99-104 do documento Aula_20_Mapeamento_de_Texturas.pdf,
-        // e também use as variáveis min*/max* definidas abaixo para normalizar
-        // as coordenadas de textura U e V dentro do intervalo [0,1]. Para
-        // tanto, vejapor exemplo o mapeamento da variável 'p_v' utilizando
-        // 'h' no slides 158-160 do documento Aula_20_Mapeamento_de_Texturas.pdf.
-        // Veja também a Questão 4 do Questionário 4 no Moodle.
-
+        U = 0.4*(p.x - floor(p.x));
+        V = 0.4*(p.z - floor(p.z));
+    }
+    else if ( object_id == BUNNY_ID ) {
+            // Coordenadas de textura do plano, obtidas do arquivo OBJ.
         float minx = bbox_min.x;
         float maxx = bbox_max.x;
 
@@ -205,31 +225,6 @@ void main()
         U = (position_model.x - minx)/(maxx - minx);
         V = (position_model.y - miny)/(maxy - miny);
     }
-    else if ( object_id == PLANE_ID) {
-        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
-
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
-
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
-
-        float px = (position_model.x - minx) / (maxx - minx);
-        float pz = (position_model.z - minz) / (maxz - minz);
-
-        U = 0.4*(p.x - floor(p.x));
-        V = 0.4*(p.z - floor(p.z));
-
-        vec3 Kd0 = texture(TextureImage10, vec2(U,V)).rgb;
-        float lambert = max(0,dot(n,l));
-        color.rgb = Kd0 * (lambert + 0.01);
-        color.a = 1;
-        color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
-
-        return;
-    }
     else
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
@@ -240,25 +235,22 @@ void main()
     // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
     vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
 
-    if(textureId == NARUTO_TEXTURE_1_TID) {
-        Kd0 = texture(TextureImage1, vec2(texcoords.x,texcoords.y)).rgb;
-    } else if(textureId == NARUTO_TEXTURE_2_TID) {
-        Kd0 = texture(TextureImage2, vec2(texcoords.x,texcoords.y)).rgb;
-    } else if(textureId == NARUTO_TEXTURE_PUPILE_TID) {
-        Kd0 = texture(TextureImage3, vec2(texcoords.x,texcoords.y)).rgb;
-    } else if(textureId == BOX_TID) {
-        Kd0 = texture(TextureImage4, vec2(texcoords.x,texcoords.y)).rgb;
-    } else if(textureId == BRICK_TID) {
-        Kd0 = texture(TextureImage5, vec2(texcoords.x,texcoords.y)).rgb;
-    } else if(textureId == BRIDGE_TID){
-        Kd0 = texture(TextureImage6, vec2(texcoords.x,texcoords.y)).rgb;
-    } else if(textureId == COW_TID){
-        Kd0 = texture(TextureImage7, vec2(texcoords.x,texcoords.y)).rgb;
-    } else if(textureId == PIPE_TID){
-        Kd0 = texture(TextureImage8, vec2(texcoords.x,texcoords.y)).rgb;
-    } else if(textureId == PIZZA_TID){
-        Kd0 = texture(TextureImage9, vec2(texcoords.x,texcoords.y)).rgb;
+
+    switch(textureId) {
+        case NARUTO_TEXTURE_1_TID: Kd0 = texture(TextureImage1, vec2(U,V)).rgb; break;
+        case NARUTO_TEXTURE_2_TID: Kd0 = texture(TextureImage2, vec2(U,V)).rgb; break;
+        case NARUTO_TEXTURE_PUPILE_TID: Kd0 = texture(TextureImage3, vec2(U,V)).rgb; break;
+        case BOX_TID: Kd0 = texture(TextureImage4, vec2(U,V)).rgb; break;
+        case BRICK_TID: Kd0 = texture(TextureImage5, vec2(U,V)).rgb; break;
+        case BRIDGE_TID: Kd0 = texture(TextureImage6, vec2(U,V)).rgb; break;
+        case COW_TID: Kd0 = texture(TextureImage7, vec2(U,V)).rgb; break;
+        case PIPE_TID: Kd0 = texture(TextureImage8, vec2(U,V)).rgb; break;
+        case PIZZA_TID: Kd0 = texture(TextureImage9, vec2(U,V)).rgb; break;
+        case CHAO_TID: Kd0 = texture(TextureImage10, vec2(U,V)).rgb; break;
+        case WORLD_TID: Kd0 = texture(TextureImage11, vec2(U,V)).rgb; break;
+        case CAR_TID: Kd0 = texture(TextureImage12, vec2(U,V)).rgb; break;
     }
+
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
 

@@ -1,4 +1,4 @@
-g the_plane
+mtllib plane.mtl
 
 v -1 0 1
 v 1 0 1
@@ -9,6 +9,10 @@ vt 0 0
 vt 1 0
 vt 1 1
 vt 0 1
+
+g the_plane
+
+usemtl chao.jpg
 
 f 1/1 2/2 3/3
 f 1/1 3/3 4/4

@@ -31,7 +31,7 @@
 #include <algorithm>
 
 
-#include<unistd.h> 
+#include<unistd.h>
 
 // Headers das bibliotecas OpenGL
 #include <glad/glad.h>   // Criação de contexto OpenGL 3.3
@@ -338,17 +338,19 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/naruto/default-grey.jpg");      // TextureImage0
-    LoadTextureImage("../../data/naruto/ntxr000.png");      // TextureImage1
-    LoadTextureImage("../../data/naruto/ntxr001.png");      // TextureImage2
-    LoadTextureImage("../../data/naruto/ntxr006.png");      // TextureImage3
-    LoadTextureImage("../../data/box/FlatBedSmall.jpg");      // TextureImage4
-    LoadTextureImage("../../data/block/texture.jpg");      // TextureImage5
-    LoadTextureImage("../../data/bridge/bridge_diffuse.jpg");      // TextureImage6
-    LoadTextureImage("../../data/cow/cow_00_0.jpg");      // TextureImage7
-    LoadTextureImage("../../data/pipe/color_0.247840-0.247840-0.247840.jpg");      // TextureImage8
-    LoadTextureImage("../../data/pizza/TX_Food_PizzaBox01_D.png");      // TextureImage9
-    LoadTextureImage("../../data/chao.jpg");      // TextureImage10
+    LoadTextureImage("../../data/naruto/default-grey.jpg");                     // TextureImage0
+    LoadTextureImage("../../data/naruto/ntxr000.png");                          // TextureImage1
+    LoadTextureImage("../../data/naruto/ntxr001.png");                          // TextureImage2
+    LoadTextureImage("../../data/naruto/ntxr006.png");                          // TextureImage3
+    LoadTextureImage("../../data/box/FlatBedSmall.jpg");                        // TextureImage4
+    LoadTextureImage("../../data/block/texture.jpg");                           // TextureImage5
+    LoadTextureImage("../../data/bridge_obj/bridge.jpg");                       // TextureImage6
+    LoadTextureImage("../../data/cow/cow_00_0.jpg");                            // TextureImage7
+    LoadTextureImage("../../data/pipe/color_0.247840-0.247840-0.247840.jpg");   // TextureImage8
+    LoadTextureImage("../../data/pizza/TX_Food_PizzaBox01_D.png");              // TextureImage9
+    LoadTextureImage("../../data/chao.jpg");                                    // TextureImage10
+    LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");                 // TextureImage11
+    LoadTextureImage("../../data/car/POLICECA.jpg");                            // TextureImage12
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel characterModel("../../data/naruto/naruto.obj");
@@ -387,7 +389,7 @@ int main(int argc, char* argv[])
     ComputeNormals(&bunnyModel);
     BuildTrianglesAndAddToVirtualScene(&bunnyModel);
 
-    ObjModel finalModel("../../data/final.obj");
+    ObjModel finalModel("../../data/plane.obj");
     ComputeNormals(&finalModel);
     BuildTrianglesAndAddToVirtualScene(&finalModel);
 
@@ -523,7 +525,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -50.0f; // Posição do "far plane"
+        float farplane  = -100.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -562,7 +564,11 @@ int main(int argc, char* argv[])
         #define BOX 5
         #define PIPE 6
         #define COW 7
-        #define BUNNY 8
+        #define BRIDGE 8
+        #define BUNNY 9
+        #define CAR 10
+        #define FINAL_PLANE 11
+        #define SKYBOX 12
 
         // movimentacao do naturo
 
@@ -599,7 +605,7 @@ int main(int argc, char* argv[])
         }
 
         // COLISOES
-        
+
 
         // computamos a bbox min e max do personagem
         // o modelo usado contem varios objectos, logo precisaos calcular baseado nesses objetos
@@ -717,7 +723,7 @@ int main(int argc, char* argv[])
             check_colision_cilinder(character_bbox_min, character_bbox_max, pipe_bbox_min, pipe_bbox_max, narutoX, narutoZ, glm::vec3(-9.6f,4.0f,-10.0f), 1.55f, 0.8f, &objY)
 
         ) colision = true;
-        
+
         /*if (check_colision(character_bbox_min, character_bbox_max, final_bbox_min, final_bbox_max, &objY)) {
             // chegou ao topo do mundo
             TextRendering_PrintString(window, "PARABENS, VOCE CHEGOU AO TOPO!!!!", 3.0f, 3.0f, 1.0f);
@@ -746,7 +752,7 @@ int main(int argc, char* argv[])
 
 
         // COLISOES
-    
+
 
         // Desenhamos o modelo do personagem principal
         model = Matrix_Translate(narutoX, narutoY, narutoZ)
@@ -827,14 +833,14 @@ int main(int argc, char* argv[])
         model = Matrix_Translate(-15.6f,6.0f,-14.0f)
               * Matrix_Scale(1.0f,1.0f,1.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, COW);
+        glUniform1i(g_object_id_uniform, BUNNY);
         DrawVirtualObject("the_bunny");
 
         // BRIDGE
         model = Matrix_Translate(-17.9f,7.3f,-16.0f)
               * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, COW);
+        glUniform1i(g_object_id_uniform, BRIDGE);
         DrawVirtualObject("Object_bridge.jpg");
         DrawVirtualObject("Object_default-grey.jpg");
 
@@ -842,7 +848,7 @@ int main(int argc, char* argv[])
         model = Matrix_Translate(-20.6f,9.0f,-18.0f)
               * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, COW);
+        glUniform1i(g_object_id_uniform, CAR);
         DrawVirtualObject("Object_POLICECA.jpg");
         DrawVirtualObject("Object_default-grey.jpg");
 
@@ -850,9 +856,21 @@ int main(int argc, char* argv[])
         model = Matrix_Translate(-34.0f,10.0f,-20.0f)
               * Matrix_Scale(5.0f, 1.0f, 5.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
-        DrawVirtualObject("final");
+        glUniform1i(g_object_id_uniform, FINAL_PLANE);
+        DrawVirtualObject("the_plane");
 
+        glDisable(GL_CULL_FACE);
+
+        // SKYBOX
+        model = Matrix_Translate(0.0f,-1.24f,0.0f)
+              * Matrix_Scale(50.0f, 50.0f, 50.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SKYBOX);
+        DrawVirtualObject("the_sphere");
+
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
 
         // USE OS BOTOES 'V' E 'B' PARA MUDAR O TIPO DE SHADING
         if(g_usePhongShading)
@@ -1013,7 +1031,7 @@ void LoadTextureImage(const char* filename)
     glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     // Parâmetros de amostragem da textura.
-    glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_REPEAT);
     glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_REPEAT);
 
     // Agora enviamos a imagem lida do disco para a GPU
@@ -1124,6 +1142,8 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage11"), 11);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage12"), 12);
     glUseProgram(0);
 }
 
@@ -1232,7 +1252,7 @@ int mapTextureNameIndex(std::string textureName) {
         return 5;
     }
 
-    if(!textureName.compare("bridge_diffuse.jpg")) { // BRIDGE
+    if(!textureName.compare("bridge.jpg")) { // BRIDGE
         return 6;
     }
 
@@ -1246,6 +1266,18 @@ int mapTextureNameIndex(std::string textureName) {
 
     if(!textureName.compare("TX_Food_PizzaBox01_D.png")) {  // PIZZA
         return 9;
+    }
+
+    if(!textureName.compare("chao.jpg")) {  // CHAO
+        return 10;
+    }
+
+    if(!textureName.compare("tc-earth_daymap_surface.jpg")) {  // MAPA
+        return 11;
+    }
+
+    if(!textureName.compare("POLICECA.jpg")) {  // CARRO
+        return 12;
     }
 
     return 0;
@@ -1315,6 +1347,7 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model)
                     material_Ks.push_back(model->materials[shape].specular[1]);
                     material_Ks.push_back(model->materials[shape].specular[2]);
                     texture_Id.push_back(mapTextureNameIndex(model->materials[shape].diffuse_texname.c_str()));
+
                 }
 
                 // Inspecionando o código da tinyobjloader, o aluno Bernardo

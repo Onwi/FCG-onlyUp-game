@@ -1608,7 +1608,7 @@
 	<array>
 	"mapbox/earcut.hpp"
 
-1707096650 source:c:\users\gustavo\documents\uni\12023-2\fundamentosdecomputacaografica\trabalho\fcg-onlyup-game\src\main.cpp
+1707108543 source:c:\users\gustavo\documents\uni\12023-2\fundamentosdecomputacaografica\trabalho\fcg-onlyup-game\src\main.cpp
 	<cmath>
 	<cstdio>
 	<cstdlib>
@@ -1621,6 +1621,7 @@
 	<sstream>
 	<stdexcept>
 	<algorithm>
+	<unistd.h>
 	<glad/glad.h>
 	<GLFW/glfw3.h>
 	<glm/mat4x4.hpp>
