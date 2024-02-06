@@ -365,6 +365,10 @@ int main(int argc, char* argv[])
     ComputeNormals(&sphereModel);
     BuildTrianglesAndAddToVirtualScene(&sphereModel);
 
+    ObjModel sphere2Model("../../data/sphere2.obj");
+    ComputeNormals(&sphereModel);
+    BuildTrianglesAndAddToVirtualScene(&sphere2Model);
+
     ObjModel blockModel("../../data/block/block.obj");
     ComputeNormals(&blockModel);
     BuildTrianglesAndAddToVirtualScene(&blockModel);
@@ -673,7 +677,7 @@ int main(int argc, char* argv[])
         box_bbox_min.y += 1.2f;
 
         // BUNNY
-        bbox_results = calculaBBOX(bunnyModel, 1.0f,1.0f,1.0f,   -15.6f,6.0f,-14.0f);
+        bbox_results = calculaBBOX(bunnyModel, 1.0f,1.0f,1.0f,   -13.6f,6.0f,-14.0f);
         glm::vec3 bunny_bbox_min = bbox_results[0];
         glm::vec3 bunny_bbox_max = bbox_results[1];
         bunny_bbox_max.y += 1.2f;
@@ -693,24 +697,31 @@ int main(int argc, char* argv[])
         pipe_bbox_max.y += 1.2f;
         pipe_bbox_min.y += 1.2f;
 
-        bbox_results = calculaBBOX(bridgeModel, 2.0f, 2.0f, 2.0f,   -17.9f,7.3f,-16.0f);
+        bbox_results = calculaBBOX(bridgeModel, 2.0f, 2.0f, 2.0f,   -15.9f,7.3f,-16.0f);
         glm::vec3 bridge_bbox_min = bbox_results[0];
         glm::vec3 bridge_bbox_max = bbox_results[1];
         bridge_bbox_max.y += 1.2f;
         bridge_bbox_min.y += 1.2f;
 
-        bbox_results = calculaBBOX(carModel, 2.0f, 2.0f, 2.0f,   -19.6f,9.0f,-18.0f);
+        bbox_results = calculaBBOX(carModel, 2.0f, 2.0f, 2.0f,   -18.6f,9.0f,-18.0f);
         glm::vec3 car_bbox_min = bbox_results[0];
         glm::vec3 car_bbox_max = bbox_results[1];
         car_bbox_max.y += 1.2f;
         car_bbox_min.y += 1.2f;
 
         // PLANO FINAL
-        bbox_results = calculaBBOX(finalModel, 5.0f, 3.0f, 3.5f,   -34.0f,10.0f,-20.0f);
+        bbox_results = calculaBBOX(finalModel, 5.0f, 3.0f, 3.5f,   -26.0f,9.0f,-20.0f);
         glm::vec3 final_bbox_min = bbox_results[0];
         glm::vec3 final_bbox_max = bbox_results[1];
         final_bbox_max.y += 1.2f;
         final_bbox_min.y += 1.2f;
+        
+        bbox_results = calculaBBOX(sphere2Model, 0.8f,0.8f,0.8f,   -3.0,-0.4,0.0f);
+        glm::vec3 sphere2_bbox_min = bbox_results[0];
+        glm::vec3 sphere2_bbox_max = bbox_results[1];
+        sphere2_bbox_max.y += 1.2f;
+        sphere2_bbox_min.y += 1.2f;
+
 
         if (check_colision_sphere(character_bbox_min, character_bbox_max, narutoX, narutoZ, glm::vec3(-3.0,-0.4,0.0f), 2.05f, 0.8f, &objY) ||
             //check_colision_bbox(character_bbox_min, character_bbox_max, sphere_bbox_min, sphere_bbox_max, &objY) ||
@@ -719,17 +730,22 @@ int main(int argc, char* argv[])
             check_colision_bbox(character_bbox_min, character_bbox_max, box_bbox_min   , box_bbox_max   , &objY) ||
             check_colision_bbox(character_bbox_min, character_bbox_max, bridge_bbox_min, bridge_bbox_max, &objY) ||
             check_colision_bbox(character_bbox_min, character_bbox_max, cow_bbox_min   , cow_bbox_max   , &objY) ||
-            //check_colision_bbox(character_bbox_min, character_bbox_max, pipe_bbox_min  , pipe_bbox_max  , &objY)
+            check_colision_bbox(character_bbox_min, character_bbox_max, bunny_bbox_min , bunny_bbox_max , &objY) ||
+            check_colision_bbox(character_bbox_min, character_bbox_max, bridge_bbox_min, bridge_bbox_max, &objY) ||
+            check_colision_bbox(character_bbox_min, character_bbox_max, car_bbox_min   , car_bbox_max   , &objY) ||
+            check_colision_bbox(character_bbox_min, character_bbox_max, final_bbox_min , final_bbox_max , &objY) ||
             check_colision_cilinder(character_bbox_min, character_bbox_max, pipe_bbox_min, pipe_bbox_max, narutoX, narutoZ, glm::vec3(-9.6f,4.0f,-10.0f), 1.55f, 0.8f, &objY)
 
         ) colision = true;
 
-        /*if (check_colision(character_bbox_min, character_bbox_max, final_bbox_min, final_bbox_max, &objY)) {
-            // chegou ao topo do mundo
-            TextRendering_PrintString(window, "PARABENS, VOCE CHEGOU AO TOPO!!!!", 3.0f, 3.0f, 1.0f);
-            sleep(5);
-            return 0;
-        }*/
+        if (check_colision_sphere(character_bbox_min, character_bbox_max, narutoX, narutoZ, glm::vec3(-26.0f,10.4f,-20.0f), 2.05f, 0.8f, &objY)) {
+            colision = false;
+            direcao = glm::vec4(5.0f, 0.0f, 0.0f, 0.0f);
+            narutoX = 0.0f;
+            narutoY = 0.0f;
+            narutoZ = 0.0f;
+            narutoTheta = 0.0f;
+        }
 
         if (colision && g_SpaceKeyPressed) {
             narutoY += 2.0f * deltaT * gravity;
@@ -830,14 +846,14 @@ int main(int argc, char* argv[])
         DrawVirtualObject("Object_default-grey.jpg");
 
         // BUNNY
-        model = Matrix_Translate(-15.6f,6.0f,-14.0f)
+        model = Matrix_Translate(-13.6f,6.0f,-14.0f)
               * Matrix_Scale(1.0f,1.0f,1.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawVirtualObject("the_bunny");
 
         // BRIDGE
-        model = Matrix_Translate(-17.9f,7.3f,-16.0f)
+        model = Matrix_Translate(-15.9f,7.3f,-16.0f)
               * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BRIDGE);
@@ -845,7 +861,7 @@ int main(int argc, char* argv[])
         DrawVirtualObject("Object_default-grey.jpg");
 
         // CAR
-        model = Matrix_Translate(-20.6f,9.0f,-18.0f)
+        model = Matrix_Translate(-18.6f,9.0f,-18.0f)
               * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CAR);
@@ -853,11 +869,18 @@ int main(int argc, char* argv[])
         DrawVirtualObject("Object_default-grey.jpg");
 
         // PLANO FINAL DO JOGO, QUANDO CHEGAR AQUI O JOGADOR VENCE
-        model = Matrix_Translate(-34.0f,10.0f,-20.0f)
+        model = Matrix_Translate(-26.0f,9.0f,-20.0f)
               * Matrix_Scale(5.0f, 1.0f, 5.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, FINAL_PLANE);
         DrawVirtualObject("the_plane");
+
+        // ESFERA
+        model = Matrix_Translate(-27.5f,10.4f,-20.0f)
+              * Matrix_Scale(0.8f, 0.8f, 0.8f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_sphere2");
 
         glDisable(GL_CULL_FACE);
 
