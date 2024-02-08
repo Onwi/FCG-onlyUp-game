@@ -1608,7 +1608,33 @@
 	<array>
 	"mapbox/earcut.hpp"
 
-1707108543 source:c:\users\gustavo\documents\uni\12023-2\fundamentosdecomputacaografica\trabalho\fcg-onlyup-game\src\main.cpp
+1701916239 ated upstream
+
+1707363005 source:c:\users\gustavo\documents\uni\12023-2\fundamentosdecomputacaografica\trabalho\fcg-onlyup-game\src\main.cpp
+	<cmath>
+	<cstdio>
+	<cstdlib>
+	<map>
+	<stack>
+	<string>
+	<vector>
+	<limits>
+	<fstream>
+	<sstream>
+	<stdexcept>
+	<algorithm>
+	<unistd.h>
+	<glad/glad.h>
+	<GLFW/glfw3.h>
+	<glm/mat4x4.hpp>
+	<glm/vec4.hpp>
+	<glm/gtc/type_ptr.hpp>
+	<tiny_obj_loader.h>
+	<stb_image.h>
+	"utils.h"
+	"matrices.h"
+
+1707069616 shed changes
 	<cmath>
 	<cstdio>
 	<cstdlib>

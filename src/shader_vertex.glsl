@@ -63,6 +63,7 @@ uniform sampler2D TextureImage9;
 uniform sampler2D TextureImage10;
 uniform sampler2D TextureImage11;
 uniform sampler2D TextureImage12;
+uniform sampler2D TextureImage13;
 
 // TID = TEXTURE_ID
 #define GRAY_COLOR_TID 0
@@ -78,6 +79,7 @@ uniform sampler2D TextureImage12;
 #define CHAO_TID 10
 #define WORLD_TID 11
 #define CAR_TID 12
+#define SKYBOX_TID 13
 
 // Constantes
 #define M_PI   3.14159265358979323846
@@ -144,7 +146,7 @@ void main()
         vec4 n = normalize(normal);
 
         // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-        vec4 l = normalize(camera_position - p);
+        vec4 l = object_id == SKYBOX_ID ? - normalize(camera_position - p) : normalize(camera_position - p);
 
         // Vetor que define o sentido da câmera em relação ao ponto atual.
         vec4 v = normalize(camera_position - p);
@@ -156,7 +158,7 @@ void main()
         // Parâmetros que definem as propriedades espectrais da superfície
         float q; // Expoente especular para o modelo de iluminação de Phong
 
-        if( object_id == FINAL_PLANE_ID ) 
+        if( object_id == FINAL_PLANE_ID )
         {
             this_kd = vec3(0.5,0.5,0.5);
             this_ks = vec3(0.02,0.02,0.02);
@@ -211,7 +213,7 @@ void main()
         float V = 0.0;
 
         float radius = 1.0f;
-        
+
         if ( object_id == SPHERE_ID || object_id == SKYBOX_ID )
         {
             // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
@@ -279,6 +281,7 @@ void main()
             case PIZZA_TID: Kd0 = texture(TextureImage9, vec2(U,V)).rgb; break;
             case WORLD_TID: Kd0 = texture(TextureImage11, vec2(U,V)).rgb; break;
             case CAR_TID: Kd0 = texture(TextureImage12, vec2(U,V)).rgb; break;
+            case SKYBOX_TID: Kd0 = texture(TextureImage13, vec2(U,V)).rgb; break;
         }
         // Equação de Iluminação
         float lambert = max(0,dot(n,l));

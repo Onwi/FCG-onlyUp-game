@@ -59,6 +59,7 @@ uniform sampler2D TextureImage9;
 uniform sampler2D TextureImage10;
 uniform sampler2D TextureImage11;
 uniform sampler2D TextureImage12;
+uniform sampler2D TextureImage13;
 
 uniform int vertex_lighting;
 
@@ -76,6 +77,7 @@ uniform int vertex_lighting;
 #define CHAO_TID 10
 #define WORLD_TID 11
 #define CAR_TID 12
+#define SKYBOX_TID 13
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -113,7 +115,7 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(camera_position - p);
+    vec4 l = object_id == SKYBOX_ID ? - normalize(camera_position - p) : normalize(camera_position - p);
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
@@ -249,6 +251,7 @@ void main()
         case CHAO_TID: Kd0 = texture(TextureImage10, vec2(U,V)).rgb; break;
         case WORLD_TID: Kd0 = texture(TextureImage11, vec2(U,V)).rgb; break;
         case CAR_TID: Kd0 = texture(TextureImage12, vec2(U,V)).rgb; break;
+        case SKYBOX_TID: Kd0 = texture(TextureImage13, vec2(U,V)).rgb; break;
     }
 
     // Equação de Iluminação

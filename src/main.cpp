@@ -165,6 +165,11 @@ bool check_colision_sphere(glm::vec3 character_bbox_min, glm::vec3 character_bbo
                            float narutoX, float narutoZ, glm::vec3 sphere_center, float radius, float scale, float *objY);
 bool check_colision_cilinder(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max,
                              float narutoX, float narutoZ, glm::vec3 sphere_center, float radius, float scale, float *objY);
+bool check_colision_bbox(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max, float *objY);
+bool check_colision_sphere(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max,
+                           float narutoX, float narutoZ, glm::vec3 sphere_center, float radius, float scale, float *objY);
+bool check_colision_cilinder(glm::vec3 character_bbox_min, glm::vec3 character_bbox_max, glm::vec3 obj_bbox_min, glm::vec3 obj_bbox_max,
+                             float narutoX, float narutoZ, glm::vec3 sphere_center, float radius, float scale, float *objY);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -351,6 +356,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/chao.jpg");                                    // TextureImage10
     LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");                 // TextureImage11
     LoadTextureImage("../../data/car/POLICECA.jpg");                            // TextureImage12
+    LoadTextureImage("../../data/skybox.jpg");                                  // TextureImage13
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel characterModel("../../data/naruto/naruto.obj");
@@ -715,7 +721,7 @@ int main(int argc, char* argv[])
         glm::vec3 final_bbox_max = bbox_results[1];
         final_bbox_max.y += 1.2f;
         final_bbox_min.y += 1.2f;
-        
+
         bbox_results = calculaBBOX(sphere2Model, 0.8f,0.8f,0.8f,   -3.0,-0.4,0.0f);
         glm::vec3 sphere2_bbox_min = bbox_results[0];
         glm::vec3 sphere2_bbox_max = bbox_results[1];
@@ -769,6 +775,19 @@ int main(int argc, char* argv[])
 
         // COLISOES
 
+
+        glDisable(GL_CULL_FACE);
+
+        // SKYBOX
+        model = Matrix_Translate(0.0f,-1.24f,0.0f)
+              * Matrix_Scale(50.0f, 50.0f, 50.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SKYBOX);
+        DrawVirtualObject("the_sphere2");
+
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
 
         // Desenhamos o modelo do personagem principal
         model = Matrix_Translate(narutoX, narutoY, narutoZ)
@@ -880,30 +899,7 @@ int main(int argc, char* argv[])
               * Matrix_Scale(0.8f, 0.8f, 0.8f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_sphere2");
-
-        glDisable(GL_CULL_FACE);
-
-        // SKYBOX
-        model = Matrix_Translate(0.0f,-1.24f,0.0f)
-              * Matrix_Scale(50.0f, 50.0f, 50.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SKYBOX);
         DrawVirtualObject("the_sphere");
-
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glFrontFace(GL_CCW);
-
-        // USE OS BOTOES 'V' E 'B' PARA MUDAR O TIPO DE SHADING
-        if(g_usePhongShading)
-        {
-            glUniform1i(g_vertex_shading_uniform, 1);
-        }
-        else
-        {
-            glUniform1i(g_vertex_shading_uniform, 0);
-        }
 
         // USE OS BOTOES 'V' E 'B' PARA MUDAR O TIPO DE SHADING
         if(g_usePhongShading)
@@ -917,10 +913,10 @@ int main(int argc, char* argv[])
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
-        TextRendering_ShowEulerAngles(window);
+        //TextRendering_ShowEulerAngles(window);
 
         // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
-        TextRendering_ShowProjection(window);
+        //TextRendering_ShowProjection(window);
 
         // Imprimimos na tela informação sobre o número de quadros renderizados
         // por segundo (frames per second).
@@ -954,6 +950,7 @@ std::vector<glm::vec3> calculaBBOX(ObjModel object, float scale_x, float scale_y
     glm::vec3 min = g_VirtualScene[object.shapes[0].name].bbox_min;
     glm::vec3 max = g_VirtualScene[object.shapes[0].name].bbox_max;
 
+
     // aplicando o mesmo Matrix_Scale da hora de desenhar o objeto
     min.x *= scale_x;
     min.y *= scale_y;
@@ -985,6 +982,7 @@ bool check_colision_bbox(glm::vec3 character_bbox_min, glm::vec3 character_bbox_
         &&  character_bbox_max.y >= obj_bbox_min.y
         &&  character_bbox_min.z <= obj_bbox_max.z
         &&  character_bbox_max.z >= obj_bbox_min.z) {
+            printf("COLIDIU1");
             *objY = obj_bbox_max.y;
             return true;
         } else return false;
@@ -1167,6 +1165,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage11"), 11);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage12"), 12);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage13"), 13);
     glUseProgram(0);
 }
 
@@ -1301,6 +1300,10 @@ int mapTextureNameIndex(std::string textureName) {
 
     if(!textureName.compare("POLICECA.jpg")) {  // CARRO
         return 12;
+    }
+
+    if(!textureName.compare("skybox.jpg")) {  // CARRO
+        return 13;
     }
 
     return 0;
@@ -1932,16 +1935,16 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     }
 
     // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = true;
-    }
+    //if (key == GLFW_KEY_P && action == GLFW_PRESS)
+    //{
+    //    g_UsePerspectiveProjection = true;
+    //}
 
     // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
-    if (key == GLFW_KEY_O && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = false;
-    }
+    //if (key == GLFW_KEY_O && action == GLFW_PRESS)
+   // {
+   //     g_UsePerspectiveProjection = false;
+   // }
 
     // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
     if (key == GLFW_KEY_H && action == GLFW_PRESS)
