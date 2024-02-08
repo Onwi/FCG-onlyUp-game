@@ -38,7 +38,17 @@ A curva Bézier cúbica foi feita com as fórmulas do slide da aula 16. A curva 
 
 (((falar do pulo denovo talvez n sei kkkkkk)))
 
-(Botar prints )
+## Exemplos do programa
+
+2 exemplos do visual do jogo:
+
+![ex1](./pictures/exemplo_jogo1.png)
+
+![ex2](./pictures/exemplo_jogo2.png)
+
+exemplo de como a interpolação de Gouraud funciona
+
+![exgrd](./pictures/exemplo_jogo3.png)
 
 ## Manual
 
@@ -60,11 +70,15 @@ A curva Bézier cúbica foi feita com as fórmulas do slide da aula 16. A curva 
 
 - __Setinhas__ para controlar a free camera;
 
+- __MOUSE__ + __BOTÃO ESQUERDO DO MOUSE__ para controlar a free camera;
+
 ## Como Compilar e Executar
 
 ### Windows
 
 Instalar [Code::Blocks](https://www.codeblocks.org/downloads/binaries/), abrir o arquivo 'Laboratorio_5.cbp' com Code::Blocks. Em seguida, apertar o das setas azuis (marcado na figura abaixo em vermelho), e em seguida, no botão marcado de uma ingrenagem com um triângulo (marcado na figura abaixo em verde). Seguindo esses passos, o jogo deve estar rodando (para rodar novamente, basta apertar no botão marcado em verde).
+
+![Code::Blocks](./pictures/codeblocksWindows.png)
 
 ### Linux
 

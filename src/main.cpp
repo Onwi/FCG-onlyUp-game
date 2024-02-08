@@ -762,9 +762,9 @@ int main(int argc, char* argv[])
                 narutoY = objY;
             }
         } else if (colision) {
-            printf("bbox max y: %f\n", sphere_bbox_max.y);
-            printf("bbox min y: %f\n", sphere_bbox_min.y);
-            printf("naruot y: %f\n", narutoY);
+            //printf("bbox max y: %f\n", sphere_bbox_max.y);
+            //printf("bbox min y: %f\n", sphere_bbox_min.y);
+            //printf("naruto y: %f\n", narutoY);
             narutoY = objY;
             colision = false;
         } else if (!colision && !g_SpaceKeyPressed) {
@@ -982,7 +982,7 @@ bool check_colision_bbox(glm::vec3 character_bbox_min, glm::vec3 character_bbox_
         &&  character_bbox_max.y >= obj_bbox_min.y
         &&  character_bbox_min.z <= obj_bbox_max.z
         &&  character_bbox_max.z >= obj_bbox_min.z) {
-            printf("COLIDIU1");
+            //printf("COLIDIU1");
             *objY = obj_bbox_max.y;
             return true;
         } else return false;
@@ -999,7 +999,7 @@ bool check_colision_cilinder(glm::vec3 character_bbox_min, glm::vec3 character_b
         &&  character_bbox_max.y >= sphere_center.y - radius
         &&  character_bbox_min.z <= obj_bbox_max.z
         &&  character_bbox_max.z >= obj_bbox_min.z) {
-            printf("%f", sphere_center.y + one_half_radius * (1 + cos((sphere_center.x - narutoX)*one_over_radius)));
+            //printf("%f", sphere_center.y + one_half_radius * (1 + cos((sphere_center.x - narutoX)*one_over_radius)));
             *objY = sphere_center.y + one_half_radius * (1 + cos((sphere_center.x - narutoX)*one_over_radius));
             return true;
         } else return false;
@@ -1015,7 +1015,7 @@ bool check_colision_sphere(glm::vec3 character_bbox_min, glm::vec3 character_bbo
         &&  character_bbox_max.y >= sphere_center.y - radius
         &&  character_bbox_min.z <= sphere_center.z + one_third_radius
         &&  character_bbox_max.z >= sphere_center.z - one_third_radius) {
-            printf("%f", sphere_center.y + one_half_radius * (1 + 0.5*(cos((sphere_center.x - narutoX)*one_over_radius) + cos((sphere_center.y - narutoZ)*one_over_radius))));
+            //printf("%f", sphere_center.y + one_half_radius * (1 + 0.5*(cos((sphere_center.x - narutoX)*one_over_radius) + cos((sphere_center.y - narutoZ)*one_over_radius))));
             *objY = sphere_center.y + one_half_radius * (1 + 0.5*(cos((sphere_center.x - narutoX)*one_over_radius) + cos((sphere_center.y - narutoZ)*one_over_radius)));
             return true;
         } else return false;
