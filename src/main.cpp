@@ -520,7 +520,7 @@ int main(int argc, char* argv[])
                 }
             }
         } else {
-            camera_position_c  = glm::vec4(narutoX + direcao[0]*2, 10, narutoZ - direcao[2]*2, 1.0f); // Ponto "c", centro da câmera
+            camera_position_c  = glm::vec4(narutoX + direcao[0]*2, narutoY + 5, narutoZ - direcao[2]*2, 1.0f); // Ponto "c", centro da câmera
             camera_lookat_l    = glm::vec4(narutoX, narutoY, narutoZ, 1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
